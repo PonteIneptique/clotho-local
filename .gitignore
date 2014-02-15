@@ -1,3 +1,4 @@
 texts/*
 data/*
 *.pyc
+classes/*.pyc

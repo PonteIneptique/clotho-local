@@ -58,3 +58,27 @@ class Query(object):
 			self.lemmas()
 		else:
 			return True
+
+	def load(self):
+		self.deco()
+		print "Available queries"
+		available, l = self.sql.load()
+
+		if l == 0:
+			print "No saved request"
+			return False
+		else:
+			for item in available:
+				print "[" + str(item[0]) + "]\t " + item[1] + " (Mode : " + item[2] + ")"
+		
+		q = raw_input( "Which one do you want to load ? (Type the number) \n - ")
+
+		if q:
+			self.q = self.sql.load(q)
+
+	def save(self):
+		self.deco()
+		s = raw_input("Do you want to save your request ? y/n \n - ").lower()
+		if s == "y":
+			if(self.sql.save(self.q)):
+				print "Request saved"

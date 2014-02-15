@@ -26,14 +26,16 @@ except:
 print "Welcome to Perseus Networkizer"
 print "Developed by Thibault Clerice (KCL-ENC)"
 
-goQuery = raw_input("Do you want to make a new query ? y/n ")
+goQuery = raw_input("Do you want to make a new query ? y/n \n - ")
 
 if goQuery.lower() == "y":
 	print q
 	q.config()
 	q.lemmas()
 	#Save
-	#q.save()
+	q.save()
+else:
+	q.load()
 
 ##############
 #
@@ -50,6 +52,7 @@ for term in q.q["terms"]:
 			if l > 0:
 				metadata = t.metadata(d)
 				print metadata
+				sys.exit()
 
 """
 chunk, l = test.chunk(occ[0])
