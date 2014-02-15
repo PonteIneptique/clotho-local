@@ -26,10 +26,15 @@ except:
 print "Welcome to Perseus Networkizer"
 print "Developed by Thibault Clerice (KCL-ENC)"
 
+if s.check() == False:
+	q.deco()
+	print "Setting up your database"
+	s.create()
+	q.deco()
+
 goQuery = raw_input("Do you want to make a new query ? y/n \n - ")
 
 if goQuery.lower() == "y":
-	print q
 	q.config()
 	q.lemmas()
 	#Save
@@ -37,6 +42,7 @@ if goQuery.lower() == "y":
 else:
 	q.load()
 
+sys.exit()
 ##############
 #
 #	Now we have a list of lemma

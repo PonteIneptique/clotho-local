@@ -14,16 +14,37 @@ class SQL(object):
 	def __init__(self):
 		try:
 			self.debug = True
-			self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus');
+			self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2');
 
 			if self.debug:
 				cur = self.con.cursor()
 				cur.execute("SELECT VERSION()")
 				ver = cur.fetchone()
-				print "Database version : %s " % ver
 
 		except:
 			print "Not connected to DB"
+			sys.exit()
+
+	def check(self):
+		with self.con:
+			cur = self.con.cursor()
+			req = "SHOW TABLES LIKE 'python_request' "
+			cur.execute(req)
+			if len(cur.fetchall()) == 0:
+				return False
+			else:
+				return True
+
+
+
+	def create(self):
+		with self.con:
+			cur = self.con.cursor()
+			pRequest = "CREATE TABLE IF NOT EXISTS `python_request` (  `id_request` int(11) NOT NULL AUTO_INCREMENT,  `mode_request` varchar(255) DEFAULT NULL,  `name_request` varchar(45) DEFAULT NULL,  PRIMARY KEY (`id_request`)) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8"
+			pRequestTerm = "CREATE TABLE IF NOT EXISTS `python_request_term` (  `id_python_request_term` int(11) NOT NULL AUTO_INCREMENT,  `id_request` int(11) DEFAULT NULL,  `id_entity` int(11) DEFAULT NULL,  PRIMARY KEY (`id_python_request_term`)) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8"
+			cur.execute(pRequest)
+			cur.execute(pRequestTerm)
+
 
 	def lemma(self, query, numeric = False):
 		data = {}
@@ -84,7 +105,7 @@ class SQL(object):
 		cur = self.con.cursor()
 
 		if identifier == False:
-			cur.execute("SELECT * FROM `perseus`.`python_request`")
+			cur.execute("SELECT * FROM `python_request`")
 			rows = cur.fetchall()
 			return list(rows), len(rows)
 		else:
@@ -93,13 +114,13 @@ class SQL(object):
 				"terms" : [],
 				"mode" : ""
 			}
-			cur.execute("SELECT * FROM `perseus`.`python_request` WHERE id_request = ' " + str(identifier) + "' ")
+			cur.execute("SELECT * FROM `python_request` WHERE id_request = ' " + str(identifier) + "' ")
 			d = list(cur.fetchall())
 			if len(d) == 1:
 				q["name"] = d[0][1]
 				q["mode"] = d[0][2]
 
-				cur.execute("SELECT * FROM `perseus`.`python_request_term` WHERE id_request = ' " + str(identifier) + "' ")
+				cur.execute("SELECT * FROM `python_request_term` WHERE id_request = ' " + str(identifier) + "' ")
 				d = list(cur.fetchall())
 				for t in d:
 					q["terms"].append(str(t[2]))
@@ -112,10 +133,10 @@ class SQL(object):
 	def save(self, item):
 		with self.con:
 			cur = self.con.cursor()
-			cur.execute("INSERT INTO `perseus`.`python_request` (`mode_request`,`name_request`) VALUES ('" + item["mode"] + "','" + item["name"] + "');")
+			cur.execute("INSERT INTO `python_request` (`mode_request`,`name_request`) VALUES ('" + item["mode"] + "','" + item["name"] + "');")
 			
 			lastId = self.con.insert_id()
 
 			if lastId:
 				for term in item["terms"]:
-					cur.execute("INSERT INTO `perseus`.`python_request_term` (`id_request`,`id_entity`) VALUES ('" + str(lastId) + "','" + str(term) + "')")
+					cur.execute("INSERT INTO `python_request_term` (`id_request`,`id_entity`) VALUES ('" + str(lastId) + "','" + str(term) + "')")
