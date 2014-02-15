@@ -1,4 +1,9 @@
-#Installation for Ubuntu
+#Arachne
+This project is orinally developed by Thibault Clerice but it is open source and so feel free to make pull request, report issues, fork...
+
+This project aims to create network of occurences and auctoritas using Perseus data. 
+
+##Installation for Ubuntu
 
 Download all the database files from Perseus in the same folder. Then in the terminal type :
 
