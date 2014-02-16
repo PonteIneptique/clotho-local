@@ -83,9 +83,11 @@ for term in q.q["terms"]:
 	#We get the morph
 	morphs = m.all(term)
 
+	"""
 	#<Debug
 	occ = occ[0:10]
 	#Debug>
+	"""
 
 	if l > 0:
 		for o in occ:

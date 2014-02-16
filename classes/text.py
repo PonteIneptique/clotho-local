@@ -69,6 +69,7 @@ class Text(object):
 
 		sentence = word_tokenize(sentence)
 		for word in sentence:
+			word = word.lower()
 			if word not in self.stopwords:
 				if word not in self.learning:
 					m = self.m.morph(word)
@@ -116,6 +117,9 @@ class Text(object):
 		if div2:
 
 			return div2.text.encode("UTF-8")
+		elif div1:
+			return div1.text.encode("UTF-8")
+
 		else:
 			print identifier[1]
 			print div2
