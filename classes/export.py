@@ -69,7 +69,7 @@ class Export(object):
 		for e in ed:
 			same = [row for row in ed if row[0] != e[0] and row[1] == e[1]]
 			for edge in same:
-				edg = [e[0], edge[0]]
+				edg = [e[0], edge[0], edge[1]]
 				h1 = hashlib.md5("".join([e[0], edge[0], edge[1]])).hexdigest()
 				h2 = hashlib.md5("".join([e[0], edge[0], edge[1]])).hexdigest()
 				if h1 not in existing and h2 not in existing:
@@ -86,7 +86,7 @@ class Export(object):
 		separator = "\t"
 		if mode == "lemma":
 			nodesColumn = ["id", "label"]
-			edgesColumn = ["target", "source"]
+			edgesColumn = ["target", "source", "sentence"]
 		else:
 			nodesColumn = ["id", "label", "type", "document"]
 			edgesColumn = ["target", "source", "type"]
