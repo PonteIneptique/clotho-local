@@ -15,7 +15,7 @@ class SQL(object):
 		try:
 			self.debug = False
 			if results:
-				self.results  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
+				self.con  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
 
 			else:
 				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2');
