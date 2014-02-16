@@ -11,10 +11,14 @@ except:
 	sys.exit()
 
 class SQL(object):
-	def __init__(self):
+	def __init__(self, results = False):
 		try:
-			self.debug = True
-			self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2');
+			self.debug = False
+			if results:
+				self.results  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
+
+			else:
+				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2');
 
 			if self.debug:
 				cur = self.con.cursor()
@@ -24,6 +28,26 @@ class SQL(object):
 		except:
 			print "Not connected to DB"
 			sys.exit()
+
+
+
+	def escape(self, string):
+		return mdb.escape_string(string)
+		
+	def resConnection(self):
+		try:
+			self.results  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
+
+			if self.debug:
+				cur = self.con.cursor()
+				cur.execute("SELECT VERSION()")
+				ver = cur.fetchone()
+
+		except:
+			print "Not connected to DB Results"
+
+		return self.results
+
 
 	def check(self):
 		with self.con:
@@ -35,24 +59,31 @@ class SQL(object):
 			else:
 				return True
 
-
+	def saveMorph(self, morph):
+		with self.con:
+			cur = self.con.cursor()
+			req = "INSERT INTO `morph` (`lemma_morph`,`form_morph`) VALUES ('" + morph["lemma"] + "','" + morph["form"] + "');"
+			cur.execute(req)
+		self.con.commit()
 
 	def create(self):
 		with self.con:
 			cur = self.con.cursor()
 			pRequest = "CREATE TABLE IF NOT EXISTS `python_request` (  `id_request` int(11) NOT NULL AUTO_INCREMENT,  `mode_request` varchar(255) DEFAULT NULL,  `name_request` varchar(45) DEFAULT NULL,  PRIMARY KEY (`id_request`)) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8"
 			pRequestTerm = "CREATE TABLE IF NOT EXISTS `python_request_term` (  `id_python_request_term` int(11) NOT NULL AUTO_INCREMENT,  `id_request` int(11) DEFAULT NULL,  `id_entity` int(11) DEFAULT NULL,  PRIMARY KEY (`id_python_request_term`)) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8"
+			morph = "CREATE TABLE `morph` (`id_morph` int(11) NOT NULL AUTO_INCREMENT, `lemma_morph` varchar(100) CHARACTER SET utf8 DEFAULT NULL,  `form_morph` varchar(100) CHARACTER SET utf8 DEFAULT NULL,  PRIMARY KEY (`id_morph`),  UNIQUE KEY `index2` (`lemma_morph`,`form_morph`)) ENGINE=InnoDB DEFAULT CHARSET=utf8"
 			cur.execute(pRequest)
 			cur.execute(pRequestTerm)
+			cur.execute(morph)
 
 
 	def lemma(self, query, numeric = False):
 		data = {}
 		cur = self.con.cursor()
 		if numeric == False:
-			cur.execute("SELECT id, display_name, max_occ FROM hib_entities WHERE entity_type = 'Lemma' AND display_name LIKE '" + query + "'")
+			cur.execute("SELECT lemma_id, lemma_text, bare_headword, lemma_short_def FROM hib_lemmas WHERE lemma_text LIKE '" + query + "'")
 		else:
-			cur.execute("SELECT id, display_name, max_occ FROM hib_entities WHERE entity_type = 'Lemma' AND id = '" + str(query) + "'")
+			cur.execute("SELECT lemma_id, lemma_text, bare_headword, lemma_short_def FROM hib_lemmas WHERE lemma_id = '" + str(query) + "'")
 
 		rows = cur.fetchall()
 
@@ -68,11 +99,9 @@ class SQL(object):
 		cur = self.con.cursor()
 		cur.execute("SELECT * FROM perseus.hib_chunks WHERE id='" + query + "'")
 
-		rows = cur.fetchall()
+		row = list(cur.fetchone())
 
-		rows = list(rows[0])
-
-		return rows, len(rows)
+		return row, len(row)
 
 	def metadata(self, query):
 		data = []
@@ -91,7 +120,14 @@ class SQL(object):
 	def occurencies(self, query):
 		data = []
 		cur = self.con.cursor()
-		cur.execute("SELECT chunk_id FROM hib_frequencies WHERE entity_id = '" + query + "' AND chunk_id != ''")
+
+		#We retrieve the entity_id before going further
+		cur.execute("SELECT id FROM hib_entities WHERE entity_type = 'Lemma' and display_name='"+query+"'")
+		i = cur.fetchone()
+		i = i[0]
+
+
+		cur.execute("SELECT chunk_id FROM hib_frequencies WHERE entity_id = '" + str(i) + "' AND chunk_id != ''")
 
 		rows = cur.fetchall()
 
@@ -126,8 +162,6 @@ class SQL(object):
 					q["terms"].append(str(t[2]))
 
 			return q
-
-
 
 
 	def save(self, item):

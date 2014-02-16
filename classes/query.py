@@ -45,13 +45,13 @@ class Query(object):
 		else:
 			print "Results : "
 			for l in data:
-				print "["+str(l)+"] " + data[l][1] + " (Maximum Occurences : "+str(data[l][2])+")"
+				print "["+str(l)+"] " + data[l][2] + " (Definition : "+str(data[l][3])+")"
 
 			id = raw_input("Type the numeric identifier (ex: [1]) for relevant lemma. \n eg. : 1,2 \n e.g. 1 \n - ")
 
 			id = id.split(",")
 			for i in id:
-				self.q["terms"].append(str(data[int(i)][0]))
+				self.q["terms"].append(str(data[int(i)][1]))
 		
 		q = raw_input("Do you want to add another lemma ? y/n \n - ")
 		if q.lower() == "y":

@@ -23,7 +23,21 @@ except:
 	print "Unable to load Text dependency"
 	sys.exit()
 
-print "Welcome to Perseus Networkizer"
+try:
+	import classes.morph as M
+	m = M.Morph()
+except:
+	print "Unable to load Morphology dependency"
+	sys.exit()
+
+try:
+	import classes.results as R
+	r = R.Results()
+except:
+	print "Unable to load Results dependency"
+	sys.exit()
+
+print "Welcome to Arachne"
 print "Developed by Thibault Clerice (KCL-ENC)"
 
 if s.check() == False:
@@ -42,23 +56,62 @@ if goQuery.lower() == "y":
 else:
 	q.load()
 
-sys.exit()
 ##############
 #
 #	Now we have a list of lemma
 #
 ##############
 
+terms =  {}
+
+#
+#Structure
+#
+"""
+#	terms = {
+		term = [
+			[form, lemma, text, sentence]
+		]
+	}
+"""
+terms = {}
 for term in q.q["terms"]:
-	print term
 	occ, l = s.occurencies(term)
+
+	terms[term] = []
+
+	#We get the morph
+	morphs = m.all(term)
+
+	#<Debug
+	occ = occ[0:10]
+	#Debug>
+
 	if l > 0:
 		for o in occ:
 			d, l = s.chunk(o)
+			"""
+			#Metadata retrieving
 			if l > 0:
 				metadata = t.metadata(d)
 				print metadata
 				sys.exit()
+
+			"""
+			#Reading chunk
+			section = t.chunk(d)
+			#Now search for our term
+			sentences = t.find(section, morphs)
+			#For each sentence, we now update terms
+			for sentence in sentences:
+				lemma = t.lemmatize(sentence)
+				for lem in lemma:
+					terms[term].append([lem[0], lem[1], o[1], sentence])
+
+#Then we save all thos results :
+for term in terms:
+	r.save(terms[term])
+			
 
 """
 chunk, l = test.chunk(occ[0])
