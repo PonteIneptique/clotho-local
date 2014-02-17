@@ -153,8 +153,8 @@ class SQL(object):
 			cur.execute("SELECT * FROM `python_request` WHERE id_request = ' " + str(identifier) + "' ")
 			d = list(cur.fetchall())
 			if len(d) == 1:
-				q["name"] = d[0][1]
-				q["mode"] = d[0][2]
+				q["name"] = d[0][2]
+				q["mode"] = d[0][1]
 
 				cur.execute("SELECT * FROM `python_request_term` WHERE id_request = ' " + str(identifier) + "' ")
 				d = list(cur.fetchall())

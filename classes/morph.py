@@ -62,6 +62,7 @@ class Morph(object):
 				data = [row[0] for row in rows]
 				return data
 			else:
+				print mode
 				req = cur.execute("SELECT lemma_morph FROM morph WHERE form_morph = '" + form + "'")
 
 				rows = cur.fetchall()
