@@ -3,6 +3,8 @@
 
 
 import sys
+import re
+
 try:
 	from bs4 import BeautifulSoup
 except:
@@ -60,7 +62,7 @@ class Text(object):
 
 		return p
 
-	def lemmatize(self, sentence):
+	def lemmatize(self, sentence, mode = "Lemma"):
 		data = []
 		#Cleaning sentence
 		sentence = sentence.strip()
@@ -72,7 +74,7 @@ class Text(object):
 			word = word.lower()
 			if word not in self.stopwords:
 				if word not in self.learning:
-					m = self.m.morph(word)
+					m = self.m.morph(word, mode)
 					d = [word, m]
 					self.learning[word] = m
 				else:

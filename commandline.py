@@ -92,21 +92,22 @@ for term in q.q["terms"]:
 	if l > 0:
 		for o in occ:
 			d, l = s.chunk(o)
+			
 			"""
 			#Metadata retrieving
 			if l > 0:
 				metadata = t.metadata(d)
 				print metadata
 				sys.exit()
-
 			"""
+
 			#Reading chunk
 			section = t.chunk(d)
 			#Now search for our term
 			sentences = t.find(section, morphs)
 			#For each sentence, we now update terms
 			for sentence in sentences:
-				lemma = t.lemmatize(sentence)
+				lemma = t.lemmatize(sentence, q.q["mode"])
 				for lem in lemma:
 					terms[term].append([lem[0], lem[1], o[1], sentence])
 

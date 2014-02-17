@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import re
 
 try:
 	from xml.etree.cElementTree import iterparse
@@ -50,11 +51,31 @@ class Morph(object):
 			return data
 
 
-	def morph(self, form):
+	def morph(self, form, mode = "lemma"):
 		with self.s.con:
 			cur = self.s.con.cursor()
-			req = cur.execute("SELECT lemma_morph FROM morph WHERE form_morph = '" + form + "'")
 
-			rows = cur.fetchall()
-			data = [row[0] for row in rows]
-			return data
+			if mode == "lemma":
+				req = cur.execute("SELECT lemma_morph FROM morph WHERE form_morph = '" + form + "'")
+
+				rows = cur.fetchall()
+				data = [row[0] for row in rows]
+				return data
+			else:
+				req = cur.execute("SELECT lemma_morph FROM morph WHERE form_morph = '" + form + "'")
+
+				rows = cur.fetchall()
+				data = [row[0] for row in rows]
+
+				if len(data) == 0:
+					if form[0].isupper():
+						#Just to be sure, if form has a caps, we ensure that it is sent back
+						return []
+					else:
+						return False
+				else:
+					test = ['"' + str(re.sub("\d+", "", row[0])) + "'" for row in rows]
+
+					cur.execute("SELECT sort_string FROM hib_entities WHERE entity_type = 'Person' AND sort_string IN (%s)", [",".join(test)])
+
+				return data
