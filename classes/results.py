@@ -84,10 +84,11 @@ class Results(object):
 		#	]
 		#
 		for row in rows:
-			for lemma in row[1]:
-				s = self.sentence(row[3], row[2])
-				l = self.lemma(lemma)
-				f = self.form(row[0])
+			if row[1] != False:
+				for lemma in row[1]:
+					s = self.sentence(row[3], row[2])
+					l = self.lemma(lemma)
+					f = self.form(row[0])
 
-				self.relationship(s,f,l)
+					self.relationship(s,f,l)
 
