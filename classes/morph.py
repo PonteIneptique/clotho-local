@@ -51,11 +51,11 @@ class Morph(object):
 			return data
 
 
-	def morph(self, form, mode = "lemma"):
+	def morph(self, form, mode = "Lemma"):
 		with self.s.con:
 			cur = self.s.con.cursor()
 
-			if mode == "lemma":
+			if mode == "Lemma":
 				req = cur.execute("SELECT lemma_morph FROM morph WHERE form_morph = '" + form + "'")
 
 				rows = cur.fetchall()
@@ -77,5 +77,9 @@ class Morph(object):
 					test = ['"' + str(re.sub("\d+", "", row[0])) + "'" for row in rows]
 
 					cur.execute("SELECT sort_string FROM hib_entities WHERE entity_type = 'Person' AND sort_string IN (%s)", [",".join(test)])
-
-				return data
+					cur.fetchall()
+					data = [row[0] for row in rows]
+					if len(data) == 0:
+						return False
+					else:
+						return data
