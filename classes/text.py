@@ -20,7 +20,7 @@ except:
 try:
 	import classes.morph as Morph
 except:
-	print "Error importing MYSQL tool"
+	print "Error importing Morph tool"
 	sys.exit()
 
 try:

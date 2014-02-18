@@ -126,7 +126,7 @@ for term in q.q["terms"]:
 			sentences = t.find(section, morphs)
 			#For each sentence, we now update terms
 			for sentence in sentences:
-				lemma = t.lemmatize(sentence, q.q["mode"], q.["terms"])
+				lemma = t.lemmatize(sentence, q.q["mode"], q.q["terms"])
 				for lem in lemma:
 					terms[term].append([lem[0], lem[1], d[1], sentence])
 

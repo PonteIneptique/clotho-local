@@ -29,7 +29,6 @@ class Morph(object):
 		self.widget = ['Words processed: ', Counter(), ' ( ', Timer() , ' )']
 		self.pbar = False
 		self.processed = 0
-		self.include =
 
 	def install(self):
 		data = {"lemma" : "", "form" : ""}
