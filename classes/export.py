@@ -40,7 +40,7 @@ class Export(object):
 						self.cache["lemma"][row[0]] = lemma[0]
 						nodes.append([lem, self.cache["lemma"][row[0]], "lemma", "Null"])
 					else:
-						self.cache["lemma"][row[0]] = "Unknown"
+						self.cache["lemma"][row[0]] = None
 
 				#Sentence :
 				if row[2] not in self.cache["sentence"]:
@@ -58,11 +58,13 @@ class Export(object):
 
 				#We add two edges : lemma -> sentence; lemma -> form
 				#We presume that a vote has been made and only form = 1 lemma
-				edges.append([lem, sen, "lemma-sentence"])
-				edges.append([lem, frm, "lemma-form"])
 
-				orphans["edges"].append([frm, sen])
-				orphans["nodes"].append([frm, self.cache["form"][row[1]]])
+				if self.cache["lemma"][row[0]] == None:
+					orphans["edges"].append([frm, sen])
+					orphans["nodes"].append([frm, self.cache["form"][row[1]]])
+				else:
+					edges.append([lem, sen, "lemma-sentence"])
+					edges.append([lem, frm, "lemma-form"])
 
 		self.nodes = nodes
 		self.edges = edges
@@ -90,17 +92,32 @@ class Export(object):
 					edges.append(edg)
 					existing.append(h1)
 
-		self.nodes = nodes
+		#
+		#Updating weight:
+		#
 		self.edges = edges
+		self.weight()
 
 
+	def weight(self, nodes = False, edges = False, terms = "l4"):
+		if nodes == False:
+			nodes = self.nodes
+		if edges == False:
+			edges = self.edges
 
+		n = []
+		for node in nodes:
+			e = [row for row in edges if node[0] in row and "l4" in row]
+			n.append(node + [len(e)])
+
+		self.nodes = n
 
 	def gephi(self, mode="sentence"):
 		separator = "\t"
 		if mode == "lemma":
-			nodesColumn = ["id", "label"]
+			nodesColumn = ["id", "label", "weight"]
 			edgesColumn = ["target", "source", "sentence"]
+			self.weight()
 		else:
 			nodesColumn = ["id", "label", "type", "document"]
 			edgesColumn = ["target", "source", "type"]
