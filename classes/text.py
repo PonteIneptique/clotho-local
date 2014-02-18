@@ -36,6 +36,7 @@ class Text(object):
 		self.m = Morph.Morph()
 		self.learning = {}
 		self.dots = "".join([',', '.', '...', '"', "'", ':', ';', '!', '?','-', "(", ")", "[", "]"])
+		self.processed = []
 
 		f = open("./morph/stopwords.txt")
 		self.stopwords = f.read().encode("UTF-8").split(",")
@@ -96,11 +97,12 @@ class Text(object):
 
 			i = 0
 			while i < len(sentences):
-				if form in word_tokenize(sentences[i]):
+				#Last condition ensure that sentences has not been processed
+				if form in word_tokenize(sentences[i]) and sentences[i] not in self.processed:
+					self.processed.append(sentences[i])
 					correct.append(sentences.pop(i))
 				else:
 					i += 1
-
 		return correct
 
 	def chunk(self, identifier):
