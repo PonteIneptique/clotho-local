@@ -21,6 +21,7 @@ class Export(object):
 	def nodification(self):
 		nodes = [] # [id, label, type, document_id]
 		edges = []
+		orphans = {"edges" : [], "nodes" : []}
 		with self.results.con:
 			cur = self.results.con.cursor()
 			cur.execute("SELECT * FROM lemma_has_form")
@@ -38,6 +39,8 @@ class Export(object):
 					if lemma != None:
 						self.cache["lemma"][row[0]] = lemma[0]
 						nodes.append([lem, self.cache["lemma"][row[0]], "lemma", "Null"])
+					else:
+						self.cache["lemma"][row[0]] = "Unknown"
 
 				#Sentence :
 				if row[2] not in self.cache["sentence"]:
@@ -58,12 +61,22 @@ class Export(object):
 				edges.append([lem, sen, "lemma-sentence"])
 				edges.append([lem, frm, "lemma-form"])
 
+				orphans["edges"].append([frm, sen])
+				orphans["nodes"].append([frm, self.cache["form"][row[1]]])
+
 		self.nodes = nodes
 		self.edges = edges
+		self.orphans = orphans
 
 	def lemma(self):
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
+
+		if len(self.orphans["nodes"]) > 0:
+			nodes = nodes + self.orphans["nodes"]
+
 		ed = [edge for edge in self.edges if edge[2] == "lemma-sentence"]
+		if len(self.orphans["edges"]) > 0:
+			ed = ed + self.orphans["edges"]
 		edges = []
 		existing = []
 
