@@ -16,11 +16,19 @@ except:
 	print "Error importing MYSQL tool"
 	sys.exit()
 
+try:
+	from progressbar import ProgressBar, Counter, Timer
+except:
+	print "Error importing progress bar "
+	sys.exit()
+
 
 class Morph(object):
 	def __init__(self):
-		print "Loading"
 		self.s = SQL.SQL()
+		self.widget = ['Words processed: ', Counter(), ' ( ', Timer() , ' )']
+		self.pbar = False
+		self.processed = 0
 
 	def install(self):
 		data = {"lemma" : "", "form" : ""}
@@ -51,13 +59,21 @@ class Morph(object):
 			return data
 
 
-	def morph(self, form, mode = "Lemma", safemode = False):
+	def morph(self, form, mode = "Lemma", safemode = False,):
+		if self.pbar == False:
+			self.pbar = ProgressBar(widgets=self.widget, maxval=100000).start()
+
 		with self.s.con:
 			cur = self.s.con.cursor()
 
-			req = cur.execute("SELECT morph.lemma_morph, hib_entities.entity_type FROM morph LEFT JOIN hib_entities ON (hib_entities.display_name = %s AND hib_entities.entity_type != \"Lemma\") WHERE form_morph= %s ", [form, form.split("#")[0]])
+			req = cur.execute("SELECT morph.lemma_morph, hib_entities.entity_type FROM morph LEFT JOIN hib_entities ON (hib_entities.display_name = morph.lemma_morph AND hib_entities.entity_type != \"Lemma\") WHERE form_morph= %s ", [form])
 			rows = cur.fetchall()
 			data = [list(row) for row in rows]
+
+			#Update Progress bar
+			self.processed += 1
+			self.pbar.update(self.processed)
+
 
 			if mode == "Lemma":
 				return data

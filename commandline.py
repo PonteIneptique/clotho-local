@@ -36,9 +36,16 @@ try:
 except:
 	print "Unable to load Results dependency"
 	sys.exit()
+try:
+	from progressbar import ProgressBar, Counter, Timer
+except:
+	print "Unable to load ProgressBar dependency"
+	sys.exit()
 
-print "Welcome to Arachne"
-print "Developed by Thibault Clerice (KCL-ENC)"
+q.deco()
+print "\t\tWelcome to Arachne"
+print "\t\tDeveloped by Thibault Clerice (KCL-ENC)"
+q.deco()
 
 if s.check() == False:
 	q.deco()
@@ -55,6 +62,8 @@ if goQuery.lower() == "y":
 	q.save()
 else:
 	q.load()
+
+q.deco()
 
 ##############
 #
@@ -74,9 +83,16 @@ terms =  {}
 		]
 	}
 """
+widget = ['Processing ocurrence n°', Counter(), ' ( ', Timer(), ' ) ']
+pbar = False
 terms = {}
 for term in q.q["terms"]:
 	occ, l = s.occurencies(term)
+
+	if pbar != False:
+		pbar.finish()
+	pbar = ProgressBar(widgets=widget, maxval=l).start()
+	progress = 0
 
 	terms[term] = []
 
@@ -92,6 +108,8 @@ for term in q.q["terms"]:
 
 	if l > 0:
 		for o in occ:
+			progress += 1
+			pbar.update(progress)
 			d, l = s.chunk(o)
 			
 			"""
