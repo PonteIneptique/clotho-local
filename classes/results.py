@@ -17,21 +17,21 @@ class Results(object):
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 
 	def lemma(self, lemma):
-		if lemma in self.saved["lemma"]:
-			return self.saved["lemma"][lemma]
+		if lemma[0] in self.saved["lemma"]:
+			return self.saved["lemma"][lemma[0]]
 		else:
 			with self.con:
 				cur = self.con.cursor()
-				cur.execute("SELECT id_lemma FROM lemma WHERE text_lemma = %s LIMIT 1", [lemma])
+				cur.execute("SELECT id_lemma FROM lemma WHERE text_lemma = %s LIMIT 1", [lemma[0]])
 				d = cur.fetchone()
 
 				if d != None:
 					if len(d) == 1:
 						return d[0]
 				else:
-					cur.execute("INSERT INTO lemma (text_lemma) VALUES (%s)", [lemma])
+					cur.execute("INSERT INTO lemma (text_lemma, type_lemma) VALUES (%s, %s)", [lemma[0],lemma[1]])
 					r = self.con.insert_id()
-					self.saved["lemma"][lemma] = r
+					self.saved["lemma"][lemma[0]] = r
 					return r
 
 	def form(self, form):
@@ -56,7 +56,6 @@ class Results(object):
 		if sentence in self.saved["sentence"]:
 			return self.saved["sentence"][sentence]
 		else:
-			print sentence
 			with self.con:
 				cur = self.con.cursor()
 				cur.execute("SELECT id_sentence FROM sentence WHERE text_sentence = %s AND id_document = %s LIMIT 1", [sentence, text])
@@ -66,7 +65,7 @@ class Results(object):
 					if len(d) == 1:
 						return d[0]
 				else:
-					cur.execute("INSERT INTO sentence (text_sentence, id_document) VALUES ( %s, '" + text + "')", [sentence])
+					cur.execute("INSERT INTO sentence (text_sentence, id_document) VALUES ( %s, %s )", [sentence, text])
 					r = self.con.insert_id()
 					self.saved["sentence"][sentence] = r
 					return r
@@ -84,11 +83,19 @@ class Results(object):
 		#	]
 		#
 		for row in rows:
+			print row
 			if row[1] != False:
-				for lemma in row[1]:
+				if len(row[1]) == 0:
 					s = self.sentence(row[3], row[2])
-					l = self.lemma(lemma)
+					l = 0
 					f = self.form(row[0])
 
 					self.relationship(s,f,l)
+				else:
+					for lemma in row[1]:
 
+						s = self.sentence(row[3], row[2])
+						l = self.lemma(lemma)
+						f = self.form(row[0])
+
+						self.relationship(s,f,l)

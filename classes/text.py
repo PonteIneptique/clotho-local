@@ -35,7 +35,7 @@ class Text(object):
 		self.sql = SQL.SQL()
 		self.m = Morph.Morph()
 		self.learning = {}
-		self.dots = "".join([',', '.', '...', '"', "'", ':', ';', '!', '?'])
+		self.dots = "".join([',', '.', '...', '"', "'", ':', ';', '!', '?','-', "(", ")", "[", "]"])
 
 		f = open("./morph/stopwords.txt")
 		self.stopwords = f.read().encode("UTF-8").split(",")
@@ -70,18 +70,21 @@ class Text(object):
 			sentence = sentence.replace(dot, " ")
 
 		sentence = word_tokenize(sentence)
+		safe = True
 		for word in sentence:
-			word = word.lower()
-			if word not in self.stopwords:
+
+			lower = word.lower()
+			if lower not in self.stopwords:
 				if word not in self.learning:
-					m = self.m.morph(word, mode)
+					m = self.m.morph(word, mode, safe)
 					d = [word, m]
 					self.learning[word] = m
 				else:
-					print "Using cache for " + word
+					#print "Using cache for " + word
 					d = [word, self.learning[word]]
 
 				data.append(d)
+			safe = False
 		
 
 		return data

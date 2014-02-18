@@ -34,9 +34,10 @@ class Export(object):
 				#Lemma :
 				if row[0] not in self.cache["lemma"]:
 					cur.execute("SELECT text_lemma FROM lemma WHERE id_lemma = %s LIMIT 1", [row[0]])
-					lemma = cur.fetchone()[0]
-					self.cache["lemma"][row[0]] = lemma
-					nodes.append([lem, self.cache["lemma"][row[0]], "lemma", "Null"])
+					lemma = cur.fetchone()
+					if lemma != None:
+						self.cache["lemma"][row[0]] = lemma[0]
+						nodes.append([lem, self.cache["lemma"][row[0]], "lemma", "Null"])
 
 				#Sentence :
 				if row[2] not in self.cache["sentence"]:

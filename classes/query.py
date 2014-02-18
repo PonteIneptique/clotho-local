@@ -69,7 +69,7 @@ class Query(object):
 			return False
 		else:
 			for item in available:
-				print "[" + str(item[0]) + "]\t " + item[1] + " (Mode : " + item[2] + ")"
+				print "[" + str(item[0]) + "]\t " + item[2] + " (Mode : " + item[1] + ")"
 		
 		q = raw_input( "Which one do you want to load ? (Type the number) \n - ")
 

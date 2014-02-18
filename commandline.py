@@ -89,6 +89,7 @@ for term in q.q["terms"]:
 	#Debug>
 	"""
 
+
 	if l > 0:
 		for o in occ:
 			d, l = s.chunk(o)
@@ -109,7 +110,7 @@ for term in q.q["terms"]:
 			for sentence in sentences:
 				lemma = t.lemmatize(sentence, q.q["mode"])
 				for lem in lemma:
-					terms[term].append([lem[0], lem[1], o[1], sentence])
+					terms[term].append([lem[0], lem[1], d[1], sentence])
 
 #Then we save all thos results :
 for term in terms:

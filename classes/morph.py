@@ -51,36 +51,35 @@ class Morph(object):
 			return data
 
 
-	def morph(self, form, mode = "Lemma"):
+	def morph(self, form, mode = "Lemma", safemode = False):
 		with self.s.con:
 			cur = self.s.con.cursor()
 
-			if mode == "Lemma":
-				req = cur.execute("SELECT lemma_morph FROM morph WHERE form_morph = '" + form + "'")
+			req = cur.execute("SELECT morph.lemma_morph, hib_entities.entity_type FROM morph LEFT JOIN hib_entities ON (hib_entities.display_name = %s AND hib_entities.entity_type != \"Lemma\") WHERE form_morph= %s ", [form, form.split("#")[0]])
+			rows = cur.fetchall()
+			data = [list(row) for row in rows]
 
-				rows = cur.fetchall()
-				data = [row[0] for row in rows]
+			if mode == "Lemma":
 				return data
 			else:
-				print mode
-				req = cur.execute("SELECT lemma_morph FROM morph WHERE form_morph = '" + form + "'")
-
-				rows = cur.fetchall()
-				data = [row[0] for row in rows]
-
 				if len(data) == 0:
-					if form[0].isupper():
+					if form[0].isupper() and safemode == False:
 						#Just to be sure, if form has a caps, we ensure that it is sent back
 						return []
 					else:
 						return False
 				else:
-					test = ['"' + str(re.sub("\d+", "", row[0])) + "'" for row in rows]
-
-					cur.execute("SELECT sort_string FROM hib_entities WHERE entity_type = 'Person' AND sort_string IN (%s)", [",".join(test)])
-					cur.fetchall()
-					data = [row[0] for row in rows]
+					data = [row for row in data if row[1] != None]
 					if len(data) == 0:
-						return False
+						if form[0].isupper():
+							#Just to be sure, if form has a caps, we ensure that it is sent back
+							return []
+						else:
+							return False
 					else:
-						return data
+						if form[0].isupper() and safemode == False:
+							return data
+						else:
+							return False
+
+
