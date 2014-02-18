@@ -62,7 +62,7 @@ class Text(object):
 
 		return p
 
-	def lemmatize(self, sentence, mode = "Lemma"):
+	def lemmatize(self, sentence, mode = "Lemma", terms = []):
 		data = []
 		#Cleaning sentence
 		sentence = sentence.strip()
@@ -76,7 +76,7 @@ class Text(object):
 			lower = word.lower()
 			if lower not in self.stopwords:
 				if word not in self.learning:
-					m = self.m.morph(word, mode, safe)
+					m = self.m.morph(word, mode, safe, terms)
 					d = [word, m]
 					self.learning[word] = m
 				else:

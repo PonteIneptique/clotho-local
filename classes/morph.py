@@ -29,6 +29,7 @@ class Morph(object):
 		self.widget = ['Words processed: ', Counter(), ' ( ', Timer() , ' )']
 		self.pbar = False
 		self.processed = 0
+		self.include =
 
 	def install(self):
 		data = {"lemma" : "", "form" : ""}
@@ -59,7 +60,7 @@ class Morph(object):
 			return data
 
 
-	def morph(self, form, mode = "Lemma", safemode = False,):
+	def morph(self, form, mode = "Lemma", safemode = False,terms = []):
 		if self.pbar == False:
 			self.pbar = ProgressBar(widgets=self.widget, maxval=100000).start()
 
@@ -85,14 +86,18 @@ class Morph(object):
 						#Just to be sure, if form has a caps, we ensure that it is sent back
 						return []
 					else:
-						#If there is no caps first letter, then return False
+						#If there is no caps first letter return false
 						return False
 				#If we do have data
 				else:
 					#We filter by != None
 					personna = [row for row in data if row[1] != None]
 					if len(personna) == 0:
-						return False
+						data = [row for row in data if row[0] in terms]
+						if len(data) == 0:
+							return False
+						else:
+							return data
 					else:
 						return personna
 
