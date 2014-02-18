@@ -78,24 +78,22 @@ class Morph(object):
 			if mode == "Lemma":
 				return data
 			else:
+				#If we have no lemma corresponding to lemma
 				if len(data) == 0:
-					if form[0].isupper() and safemode == False:
+					#But if it has a caps as first letter and safemode is off
+					if form[0].isupper():# and safemode == False:
 						#Just to be sure, if form has a caps, we ensure that it is sent back
 						return []
 					else:
+						#If there is no caps first letter, then return False
 						return False
+				#If we do have data
 				else:
-					data = [row for row in data if row[1] != None]
-					if len(data) == 0:
-						if form[0].isupper():
-							#Just to be sure, if form has a caps, we ensure that it is sent back
-							return []
-						else:
-							return False
+					#We filter by != None
+					personna = [row for row in data if row[1] != None]
+					if len(personna) == 0:
+						return False
 					else:
-						if form[0].isupper() and safemode == False:
-							return data
-						else:
-							return False
+						return personna
 
 
