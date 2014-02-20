@@ -3,6 +3,7 @@
 
 
 import sys
+import codecs
 
 try:
 	import classes.SQL as SQL
@@ -72,6 +73,7 @@ class Export(object):
 
 	def lemma(self):
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
+		print nodes
 
 		if len(self.orphans["nodes"]) > 0:
 			nodes = nodes + self.orphans["nodes"]
@@ -95,6 +97,7 @@ class Export(object):
 		#
 		#Updating weight:
 		#
+		self.nodes = nodes
 		self.edges = edges
 		self.weight()
 
@@ -122,16 +125,16 @@ class Export(object):
 			nodesColumn = ["id", "label", "type", "document"]
 			edgesColumn = ["target", "source", "type"]
 
-		f = open("./data/nodes.csv", "wt")
+		f = codecs.open("./data/nodes.csv", "wt")
 		f.write(separator.join(nodesColumn)+"\n")
 		for node in self.nodes:
-			f.write(separator.join([str(n).encode("UTF-8").replace("\\n", " ").replace("\t", " ") for n in node])+"\n")
+			f.write(separator.join([str(n).replace("\\n", " ").replace("\t", " ") for n in node])+"\n")
 		f.close()
 
-		f = open("./data/edges.csv", "wt")
+		f = codecs.open("./data/edges.csv", "wt")
 		f.write(separator.join(edgesColumn)+"\n")
 		for edge in self.edges:
-			f.write(separator.join([str(e).encode("UTF-8") for e in edge])+"\n")
+			f.write(separator.join([str(e) for e in edge])+"\n")
 		f.close()
 
 

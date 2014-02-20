@@ -83,7 +83,6 @@ class Results(object):
 		#	]
 		#
 		for row in rows:
-			print row
 			if row[1] != False:
 				if len(row[1]) == 0:
 					s = self.sentence(row[3], row[2])

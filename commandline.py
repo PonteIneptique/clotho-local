@@ -130,6 +130,7 @@ for term in q.q["terms"]:
 				for lem in lemma:
 					terms[term].append([lem[0], lem[1], d[1], sentence])
 
+pbar.finish()
 #Then we save all thos results :
 for term in terms:
 	r.save(terms[term])
