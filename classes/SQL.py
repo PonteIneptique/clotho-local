@@ -15,7 +15,7 @@ class SQL(object):
 		try:
 			self.debug = False
 			if results == True:
-				self.con  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
+				self.con  = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_results');
 			elif cache == True:
 				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache');
 			else:

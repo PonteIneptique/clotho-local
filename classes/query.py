@@ -178,3 +178,15 @@ class Query(object):
 			self.inputError(s)
 			return self.modeGephi(deco = False)
 
+	def cleanProbability(self, deco = True):
+		if deco:
+			self.deco()
+
+		s = raw_input("Clean based on probability ? y/n \n - ").lower()
+		if s == "y":
+			return "lemma"
+		elif s == "n":
+			return "sentence"
+		else:
+			self.inputError(s)
+			return self.cleanProbability(deco = False)

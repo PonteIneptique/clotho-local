@@ -12,6 +12,7 @@ except:
 	sys.exit()
 
 import hashlib
+from pprint import pprint		
 
 class Export(object):
 	def __init__(self):
@@ -64,12 +65,48 @@ class Export(object):
 					orphans["edges"].append([frm, sen])
 					orphans["nodes"].append([frm, self.cache["form"][row[1]]])
 				else:
-					edges.append([lem, sen, "lemma-sentence"])
+					edges.append([frm, sen, "form-sentence"])
 					edges.append([lem, frm, "lemma-form"])
 
 		self.nodes = nodes
 		self.edges = edges
 		self.orphans = orphans
+
+	def cleanProbability(self):
+		edges = []
+		compute = {}
+		#We build an index
+		for edge in self.edges:
+			if edge[2] == "lemma-form":
+				if edge[0] not in compute:
+					compute[edge[0]] = 0
+				if edge[1] not in compute:
+					compute[edge[1]] = []
+
+				compute[edge[0]] += 1
+				compute[edge[1]].append(edge[0])
+
+		#We give to our edges the one which are not lemma-form AND the one which have only one possibility
+		edges += [edge for edge in self.edges if edge[2] == "form-sentence"]#(edge[2] == "lemma-form" and len(compute[edge[1]]) <= 1) or 
+
+		#Then we need to find a way to compute stuff isn't it ?
+		#Basically, we want the one with the biggest compute[lemma] in compute[form]
+		for form in compute: 
+			if isinstance(compute[form], list) and len(compute[form]) > 1:
+				Max = 0
+				for lemma in compute[form]:
+					if Max == 0:
+						Max = lemma
+					elif compute[lemma] > compute[Max]:
+						Max = lemma
+				compute[form] = [Max]
+		edges += [[compute[edge][0], compute[edge], "lemma-form"] for edge in compute if isinstance(compute[edge], list)]
+
+
+		from pprint import pprint
+		pprint(edges)
+		return True
+
 
 	def lemma(self):
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
@@ -135,5 +172,3 @@ class Export(object):
 		for edge in self.edges:
 			f.write(separator.join([str(e) for e in edge])+"\n")
 		f.close()
-
-

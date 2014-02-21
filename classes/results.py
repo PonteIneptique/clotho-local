@@ -103,6 +103,28 @@ class Results(object):
 				d[row[0]].append([row[1], row[2]])
 
 			return [[form, d[form]] for form in d]
+
+	def clean(self):
+		"""
+			Clean the table or create them
+
+		"""
+		operations = [
+			'CREATE TABLE IF NOT EXISTS form (    id_form int(11) NOT NULL AUTO_INCREMENT,    text_form varchar(255) DEFAULT NULL,    PRIMARY KEY (id_form))  ENGINE=InnoDB DEFAULT CHARSET=utf8;'
+			'CREATE TABLE IF NOT EXISTS lemma (    id_lemma int(11) NOT NULL AUTO_INCREMENT,    text_lemma varchar(255) DEFAULT NULL,    type_lemma varchar(45) DEFAULT NULL,    PRIMARY KEY (id_lemma))  ENGINE=InnoDB DEFAULT CHARSET=utf8;',
+			'CREATE TABLE IF NOT EXISTS lemma_has_form (    id_lemma int(11) NOT NULL,    id_form int(11) NOT NULL,    id_sentence int(11) DEFAULT NULL,    KEY lhf_lemma (id_lemma),    KEY lhf_form (id_form),    KEY lhf_sentence (id_sentence))  ENGINE=InnoDB DEFAULT CHARSET=utf8;',
+			'CREATE TABLE IF NOT EXISTS sentence (    id_sentence int(11) NOT NULL AUTO_INCREMENT,    text_sentence text,    id_document varchar(255) DEFAULT NULL,    PRIMARY KEY (id_sentence))  ENGINE=InnoDB DEFAULT CHARSET=utf8;',
+			'TRUNCATE TABLE form;',
+			'TRUNCATE TABLE lemma;',
+			'TRUNCATE TABLE sentence;',
+			'TRUNCATE TABLE lemma_has_form;'
+		]
+		with self.con:
+			for op in operations:
+				cur = self.con.cursor()
+				cur.execute(op)
+				cur.close()
+
 	def relationship(self, sentence, form, lemma):
 		with self.con:
 			cur = self.con.cursor()

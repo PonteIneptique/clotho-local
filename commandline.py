@@ -122,6 +122,7 @@ if q.process():
 
 	q.deco()
 	if q.saveResults():
+		r.clean()
 		for term in terms:
 			r.save(terms[term])
 		print "Results saved"
@@ -133,12 +134,15 @@ if saved == True or q.alreadySaved() == True:
 		e = Export.Export()
 		e.nodification()
 		print "Nodification done"
-		gephiMode = "sentence"
 
+		if q.cleanProbability():
+			e.cleanProbability();
+
+		gephiMode = "sentence"
 		if q.exportLinkType() == "lemma":
 			gephiMode = "lemma"
 			e.lemma()
-			print "Link Leme->Form->Sentence transformed to Leme1->Leme2 if Leme1 and Leme2 share a same sentence"
+			print "Link Lemma->Form->Sentence transformed to Lemma1->Lemma2 if Lemma1 and Lemma2 share a same sentence"
 
 
 		exportMean = q.exportMean()
