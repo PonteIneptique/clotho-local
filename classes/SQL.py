@@ -174,4 +174,4 @@ class SQL(object):
 
 			if lastId:
 				for term in item["terms"]:
-					cur.execute("INSERT INTO `python_request_term` (`id_request`,`id_entity`) VALUES ('" + str(lastId) + "','" + str(term) + "')")
+					cur.execute("INSERT INTO `python_request_term` (`id_request`,`lemma_request`) VALUES ('" + str(lastId) + "','" + str(term) + "')")

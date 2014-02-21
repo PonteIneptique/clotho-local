@@ -42,6 +42,7 @@ class Query(object):
 		data, l = self.sql.lemma(q)
 		if l == 0:
 			print "No result for your query"
+			return self.addLemma()
 		else:
 			print "Results : "
 			for l in data:
@@ -53,11 +54,18 @@ class Query(object):
 			for i in id:
 				self.q["terms"].append(str(data[int(i)][1]))
 		
-		q = raw_input("Do you want to add another lemma ? y/n \n - ")
-		if q.lower() == "y":
-			self.lemmas()
-		else:
+		return self.addLemma()
+
+	def addLemma(self):
+		q = raw_input("Do you want to add another lemma ? y/n \n - ").lower()
+		if q == "y":
+			return self.lemmas()
+		elif q == "n":
 			return True
+		else:
+			self.inputError(q)
+			return self.addLemma()
+
 
 	def load(self):
 		self.deco()
@@ -76,9 +84,97 @@ class Query(object):
 		if q:
 			self.q = self.sql.load(q)
 
-	def save(self):
-		self.deco()
+	def inputError(self, s):
+		print "Error ----> We didn't understand your input ( "+str(s)+" ) "
+
+	def save(self, deco = True):
+		if deco:
+			self.deco()
 		s = raw_input("Do you want to save your request ? y/n \n - ").lower()
 		if s == "y":
 			if(self.sql.save(self.q)):
 				print "Request saved"
+			else:
+				print "Error during save"
+		elif s == "n":
+			print "Request won't be saved"
+		else:
+			self.inputError(s)
+			self.save(deco = False)
+
+	def saveResults(self, deco = True):
+		if deco:
+			self.deco()
+		s = raw_input("Do you want to save your results ? y/n \n - ").lower()
+		if s == "y":
+			return True
+		elif s == "n":
+			return False
+		else:
+			self.inputError(s)
+			return self.saveResults()
+
+	def exportResults(self):
+		self.deco()
+
+		s = raw_input("Do you want to export your query ? y/n \n - ").lower()
+		if s == "y":
+			return True
+		elif s == "n":
+			return False
+		else:
+			self.inputError(s)
+			return self.export(deco = False)
+
+	def process(self, deco = True):
+		if deco:
+			self.deco()
+
+		s = raw_input("Do you want to process this query ? y/n \n - ").lower()
+		if s == "y":
+			return True
+		elif s == "n":
+			return False
+		else:
+			self.inputError(s)
+			return self.process(deco = False)
+
+	def alreadySaved(self, deco = True):
+		if deco:
+			self.deco()
+
+		s = raw_input("Is this query the last one you launched and saved ? y/n \n - ").lower()
+		if s == "y":
+			return True
+		elif s == "n":
+			return False
+		else:
+			self.inputError(s)
+			return self.alreadySaved(deco = False)
+
+	def exportLinkType(self, deco = True):
+		if deco:
+			self.deco()
+
+		s = raw_input("Do you want to replace lemma/form/Sentence links to lemma/lemma links ? y/n \n - ").lower()
+		if s == "y":
+			return "lemma"
+		elif s == "n":
+			return "sentence"
+		else:
+			self.inputError(s)
+			return self.exportLinkType(deco = False)
+
+
+	def exportMean(self, deco = True):
+		availableMeans = ["gephi"]
+		if deco:
+			self.deco()
+
+		s = raw_input("Which mean of export do you want to use ? " + " / ".join(availableMeans) + " \n - ").lower()
+		if s in availableMeans:
+			return s
+		else:
+			self.inputError(s)
+			return self.modeGephi(deco = False)
+

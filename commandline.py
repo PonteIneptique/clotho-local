@@ -36,6 +36,13 @@ try:
 except:
 	print "Unable to load Results dependency"
 	sys.exit()
+
+try:
+	import classes.export as Export
+except:
+	print "Unable to load Export dependency"
+	sys.exit()
+
 try:
 	from progressbar import ProgressBar, Counter, Timer
 except:
@@ -65,90 +72,78 @@ else:
 
 q.deco()
 
-##############
-#
-#	Now we have a list of lemma
-#
-##############
-
-terms =  {}
-
-#
-#Structure
-#
-"""
-#	terms = {
-		term = [
-			[form, lemma, text, sentence]
-		]
-	}
-"""
-widget = ['Processing ocurrence n°', Counter(), ' ( ', Timer(), ' ) ']
-pbar = False
-terms = {}
-for term in q.q["terms"]:
-	occ, l = s.occurencies(term)
-
-	if pbar != False:
-		pbar.finish()
-	pbar = ProgressBar(widgets=widget, maxval=l).start()
-	progress = 0
-
-	terms[term] = []
-
-	#We get the morph
-	morphs = m.all(term)
-
+saved = False
+if q.process():
+	#PROCESS
+	terms =  {}
 	"""
-	#<Debug
-	occ = occ[0:10]
-	#Debug>
+		terms = {
+			term = [
+				[form, lemma, text, sentence]
+			]
+		}
 	"""
+	widget = ['Processing ocurrence n°', Counter(), ' ( ', Timer(), ' ) ']
+	pbar = False
+	terms = {}
+	for term in q.q["terms"]:
+		occ, l = s.occurencies(term)
+
+		if pbar != False:
+			pbar.finish()
+		pbar = ProgressBar(widgets=widget, maxval=l).start()
+		progress = 0
+
+		terms[term] = []
+
+		#We get the morph
+		morphs = m.all(term)
+
+		if l > 0:
+			for o in occ:
+				#Just Viz stuff
+				progress += 1
+				pbar.update(progress)
+
+				#Getting the chunk
+				d, l = s.chunk(o)
+
+				#Reading chunk
+				section = t.chunk(d)
+				#Now search for our term
+				sentences = t.find(section, morphs)
+				#For each sentence, we now update terms
+				for sentence in sentences:
+					lemma = t.lemmatize(sentence, q.q["mode"], q.q["terms"])
+					for lem in lemma:
+						terms[term].append([lem[0], lem[1], d[1], sentence])
+
+	pbar.finish()
+
+	q.deco()
+	if q.saveResults():
+		for term in terms:
+			r.save(terms[term])
+		print "Results saved"
+		saved = True
+
+#To be done
+if saved == True or q.alreadySaved() == True:
+	if q.exportResults():
+		e = Export.Export()
+		e.nodification()
+		print "Nodification done"
+		gephiMode = "sentence"
+
+		if q.exportLinkType() == "lemma":
+			gephiMode = "lemma"
+			e.lemma()
+			print "Link Leme->Form->Sentence transformed to Leme1->Leme2 if Leme1 and Leme2 share a same sentence"
 
 
-	if l > 0:
-		for o in occ:
-			progress += 1
-			pbar.update(progress)
-			d, l = s.chunk(o)
+		exportMean = q.exportMean()
+		if exportMean == "gephi":
+			e.gephi(gephiMode)
+			print "Export Done"
+
 			
-			"""
-			#Metadata retrieving
-			if l > 0:
-				metadata = t.metadata(d)
-				print metadata
-				sys.exit()
-			"""
-
-			#Reading chunk
-			section = t.chunk(d)
-			#Now search for our term
-			sentences = t.find(section, morphs)
-			#For each sentence, we now update terms
-			for sentence in sentences:
-				lemma = t.lemmatize(sentence, q.q["mode"], q.q["terms"])
-				for lem in lemma:
-					terms[term].append([lem[0], lem[1], d[1], sentence])
-
-pbar.finish()
-#Then we save all thos results :
-for term in terms:
-	r.save(terms[term])
-			
-
-"""
-chunk, l = test.chunk(occ[0])
-"""
-
-
-
-#<DEV#
-"""
-test = Query()
-if test.lemmas():
-	print test.q
-
-	t = text.Text()
-	t.terms = test.q["terms"]
-"""
-#DEV>#

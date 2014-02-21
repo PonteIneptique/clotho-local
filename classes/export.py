@@ -73,7 +73,6 @@ class Export(object):
 
 	def lemma(self):
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
-		print nodes
 
 		if len(self.orphans["nodes"]) > 0:
 			nodes = nodes + self.orphans["nodes"]
@@ -138,8 +137,3 @@ class Export(object):
 		f.close()
 
 
-
-e = Export()
-e.nodification()
-e.lemma()
-e.gephi("lemma")
