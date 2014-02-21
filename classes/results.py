@@ -7,13 +7,17 @@ import sys
 try:
 	import classes.SQL as SQL
 except:
-	print "MySQLdb not installed. \n apt-get install python-mysqldb"
+	print "MySQL Class not available"
 	sys.exit()
 
 class Results(object):
-	def __init__(self):
-		self.s = SQL.SQL()
-		self.con = self.s.resConnection()
+	def __init__(self, cache = False):
+		if cache == False:
+			self.s = SQL.SQL(results=True)
+			self.con = self.s.con
+		else:
+			self.s = SQL.SQL(cache = True)
+			self.con = self.s.con
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 
 	def lemma(self, lemma):
@@ -52,29 +56,58 @@ class Results(object):
 					self.saved["form"][form] = r
 					return r
 
-	def sentence(self, sentence, text):
+	def sentence(self, sentence, text = False, boolean = False):
 		if sentence in self.saved["sentence"]:
-			return self.saved["sentence"][sentence]
+			if boolean:
+				return True
+			else:
+				return self.saved["sentence"][sentence]
 		else:
 			with self.con:
 				cur = self.con.cursor()
-				cur.execute("SELECT id_sentence FROM sentence WHERE text_sentence = %s AND id_document = %s LIMIT 1", [sentence, text])
+				if text:
+					cur.execute("SELECT id_sentence FROM sentence WHERE text_sentence = %s AND id_document = %s LIMIT 1", [sentence, text])
+				else:
+					cur.execute("SELECT id_sentence FROM sentence WHERE text_sentence = %s LIMIT 1", [sentence])
+
 				d = cur.fetchone()
 
 				if d != None:
 					if len(d) == 1:
-						return d[0]
+						if boolean:
+							return True
+						else:
+							return d[0]
 				else:
-					cur.execute("INSERT INTO sentence (text_sentence, id_document) VALUES ( %s, %s )", [sentence, text])
-					r = self.con.insert_id()
-					self.saved["sentence"][sentence] = r
-					return r
+					if boolean:
+						return False
+					else:
+						if text:
+							cur.execute("INSERT INTO sentence (text_sentence, id_document) VALUES ( %s, %s )", [sentence, text])
+						else:
+							cur.execute("INSERT INTO sentence (text_sentence) VALUES ( %s )", [sentence])
+						r = self.con.insert_id()
+						self.saved["sentence"][sentence] = r
+						return r
 
+	def load(self, sentence):
+		with self.con:
+			d = {}
+			cur = self.con.cursor()
+			cur.execute("SELECT f.text_form, l.text_lemma, l.type_lemma FROM lemma_has_form lf, form f, lemma l WHERE l.id_lemma = lf.id_lemma AND f.id_form = lf.id_form AND lf.id_sentence = %s", [sentence])
+			rows = cur.fetchall()
+
+			for row in rows:
+				if row[0] not in d:
+					d[row[0]] = []
+				d[row[0]].append([row[1], row[2]])
+
+			return [[form, d[form]] for form in d]
 	def relationship(self, sentence, form, lemma):
-			with self.con:
-				cur = self.con.cursor()
-				cur.execute("INSERT INTO `results`.`lemma_has_form` (`id_lemma`,`id_form`,`id_sentence`)VALUES(%s, %s, %s)", [lemma,form,sentence])
-				return True
+		with self.con:
+			cur = self.con.cursor()
+			cur.execute("INSERT INTO `lemma_has_form` (`id_lemma`,`id_form`,`id_sentence`)VALUES(%s, %s, %s)", [lemma,form,sentence])
+			return True
 
 	def save(self, rows):
 		#

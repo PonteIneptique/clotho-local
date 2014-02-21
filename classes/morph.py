@@ -59,7 +59,7 @@ class Morph(object):
 			return data
 
 
-	def morph(self, form, mode = "Lemma", safemode = False,terms = []):
+	def morph(self, form):
 		if self.pbar == False:
 			self.pbar = ProgressBar(widgets=self.widget, maxval=100000).start()
 
@@ -74,30 +74,30 @@ class Morph(object):
 			self.processed += 1
 			self.pbar.update(self.processed)
 
-
-			if mode == "Lemma":
-				return data
+			#Returning data
+			return data
+	
+	def filter(self, form, data, safemode="", terms = []):
+		#If we have no lemma corresponding to lemma
+		if len(data) == 0:
+			#But if it has a caps as first letter and safemode is off
+			if form[0].isupper():# and safemode == False:
+				#Just to be sure, if form has a caps, we ensure that it is sent back
+				return []
 			else:
-				#If we have no lemma corresponding to lemma
+				#If there is no caps first letter return false
+				return False
+		#If we do have data
+		else:
+			#We filter by != None
+			personna = [row for row in data if row[1] != None]
+			if len(personna) == 0:
+				data = [row for row in data if row[0] in terms]
 				if len(data) == 0:
-					#But if it has a caps as first letter and safemode is off
-					if form[0].isupper():# and safemode == False:
-						#Just to be sure, if form has a caps, we ensure that it is sent back
-						return []
-					else:
-						#If there is no caps first letter return false
-						return False
-				#If we do have data
+					return False
 				else:
-					#We filter by != None
-					personna = [row for row in data if row[1] != None]
-					if len(personna) == 0:
-						data = [row for row in data if row[0] in terms]
-						if len(data) == 0:
-							return False
-						else:
-							return data
-					else:
-						return personna
+					return data
+			else:
+				return personna
 
 

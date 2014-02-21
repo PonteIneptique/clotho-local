@@ -18,6 +18,12 @@ except:
 	sys.exit()
 
 try:
+	import classes.results as R
+except:
+	print "Error importing results tool"
+	sys.exit()
+
+try:
 	import classes.morph as Morph
 except:
 	print "Error importing Morph tool"
@@ -31,13 +37,21 @@ except:
 
 class Text(object):
 	def __init__(self):
-		print "Loading text"
+
+		#Instances
 		self.sql = SQL.SQL()
 		self.m = Morph.Morph()
+		self.r = R.Results(cache=True)
+
+		self.cache = True
+
+
+		#Data
 		self.learning = {}
 		self.dots = "".join([',', '.', '...', '"', "'", ':', ';', '!', '?','-', "(", ")", "[", "]"])
 		self.processed = []
 
+		#Processed data
 		f = open("./morph/stopwords.txt")
 		self.stopwords = f.read().encode("UTF-8").split(",")
 		f.close()
@@ -65,27 +79,68 @@ class Text(object):
 
 	def lemmatize(self, sentence, mode = "Lemma", terms = []):
 		data = []
-		#Cleaning sentence
-		sentence = sentence.strip()
-		for dot in self.dots:
-			sentence = sentence.replace(dot, " ")
 
-		sentence = word_tokenize(sentence)
-		safe = True
-		for word in sentence:
+		cached = False
+		#Caching
+		if self.cache == True:
+			cached = self.r.sentence(sentence, boolean = True)
 
-			lower = word.lower()
-			if lower not in self.stopwords:
-				if word not in self.learning:
-					m = self.m.morph(word, mode, safe, terms)
-					d = [word, m]
-					self.learning[word] = m
+		if cached:
+			#Loading Id of this sentence
+			S = self.r.sentence(sentence)
+			#Loading data
+			tempData = [self.r.load(S)]
+			data = []
+			#Caching some of this data
+			safe = True
+			#<BUG>
+			#tempData return our data in an array [tempData]. So we need to make it flatter by accessing row[0]
+			#</BUG>
+			for row in tempData[0]:
+				if "Entities" in mode:
+					m = self.m.filter(row[0], row[1], safe, terms)
 				else:
-					#print "Using cache for " + word
-					d = [word, self.learning[word]]
+					m = row[1]
+				self.learning[row[0]] = m
+				data.append([row[0], m])
+				safe = False
+		else:
+			#Registering sentence
+			S = self.r.sentence(sentence)
+			#Cleaning sentence
+			sentence = sentence.strip()
+			for dot in self.dots:
+				sentence = sentence.replace(dot, " ")
 
-				data.append(d)
-			safe = False
+			sentence = word_tokenize(sentence)
+			safe = True
+			for word in sentence:
+
+				lower = word.lower()
+				if lower not in self.stopwords:
+					if word not in self.learning:
+						m = self.m.morph(word)
+
+						if self.cache == True:
+							F = self.r.form(word)
+
+							for Lem in m:
+								L = self.r.lemma(Lem)
+
+								#Make Link
+								self.r.relationship(S, F, L)
+
+						if "Entities" in mode:
+							m = self.m.filter(word, m, safe, terms)
+
+						d = [word, m]
+						self.learning[word] = m
+					else:
+						#print "Using cache for " + word
+						d = [word, self.learning[word]]
+
+					data.append(d)
+				safe = False
 		
 
 		return data

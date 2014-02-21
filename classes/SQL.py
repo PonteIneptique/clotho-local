@@ -11,12 +11,13 @@ except:
 	sys.exit()
 
 class SQL(object):
-	def __init__(self, results = False):
+	def __init__(self, results = False, cache = False):
 		try:
 			self.debug = False
-			if results:
+			if results == True:
 				self.con  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
-
+			elif cache == True:
+				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache');
 			else:
 				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2');
 
