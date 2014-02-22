@@ -22,13 +22,16 @@ except:
 	print "Error importing progress bar "
 	sys.exit()
 
-
 class Morph(object):
 	def __init__(self):
 		self.s = SQL.SQL()
 		self.widget = ['Words processed: ', Counter(), ' ( ', Timer() , ' )']
 		self.pbar = False
 		self.processed = 0
+
+		#Roman numeral regExp
+		romanNumeral = "^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$"
+		self.num = re.compile(romanNumeral)
 
 	def install(self):
 		data = {"lemma" : "", "form" : ""}
@@ -63,19 +66,24 @@ class Morph(object):
 		if self.pbar == False:
 			self.pbar = ProgressBar(widgets=self.widget, maxval=100000).start()
 
-		with self.s.con:
-			cur = self.s.con.cursor()
+		if(self.num.search(form)):
+			return False
+		elif len(form) == 1:
+			return False
+		else:
+			with self.s.con:
+				cur = self.s.con.cursor()
 
-			req = cur.execute("SELECT morph.lemma_morph, hib_entities.entity_type FROM morph LEFT JOIN hib_entities ON (hib_entities.display_name = morph.lemma_morph AND hib_entities.entity_type != \"Lemma\") WHERE form_morph= %s ", [form])
-			rows = cur.fetchall()
-			data = [list(row) for row in rows]
+				req = cur.execute("SELECT morph.lemma_morph, hib_entities.entity_type FROM morph LEFT JOIN hib_entities ON (hib_entities.display_name = morph.lemma_morph AND hib_entities.entity_type != \"Lemma\") WHERE form_morph= %s ", [form])
+				rows = cur.fetchall()
+				data = [list(row) for row in rows]
 
-			#Update Progress bar
-			self.processed += 1
-			self.pbar.update(self.processed)
+				#Update Progress bar
+				self.processed += 1
+				self.pbar.update(self.processed)
 
-			#Returning data
-			return data
+				#Returning data
+				return data
 	
 	def filter(self, form, data, safemode="", terms = []):
 		#If we have no lemma corresponding to lemma

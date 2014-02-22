@@ -121,25 +121,29 @@ class Text(object):
 					if word not in self.learning:
 						m = self.m.morph(word)
 
-						if self.cache == True:
-							F = self.r.form(word)
+						if m == False:
+							d= False
+						else:
+							if self.cache == True:
+								F = self.r.form(word)
 
-							for Lem in m:
-								L = self.r.lemma(Lem)
+								for Lem in m:
+									L = self.r.lemma(Lem)
 
-								#Make Link
-								self.r.relationship(S, F, L)
+									#Make Link
+									self.r.relationship(S, F, L)
 
-						if "Entities" in mode:
-							m = self.m.filter(word, m, safe, terms)
+							if "Entities" in mode:
+								m = self.m.filter(word, m, safe, terms)
 
-						d = [word, m]
-						self.learning[word] = m
+							d = [word, m]
+							self.learning[word] = m
 					else:
 						#print "Using cache for " + word
 						d = [word, self.learning[word]]
 
-					data.append(d)
+					if d != False:
+						data.append(d)
 				safe = False
 		
 
