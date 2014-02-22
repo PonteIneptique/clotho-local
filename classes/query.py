@@ -71,18 +71,22 @@ class Query(object):
 		self.deco()
 		print "Available queries"
 		available, l = self.sql.load()
-
+		correctAnswers = []
 		if l == 0:
 			print "No saved request"
 			return False
 		else:
 			for item in available:
+				correctAnswers.append(item[0])
 				print "[" + str(item[0]) + "]\t " + item[2] + " (Mode : " + item[1] + ")"
 		
 		q = raw_input( "Which one do you want to load ? (Type the number) \n - ")
-
-		if q:
+		if int(q) in correctAnswers:
 			self.q = self.sql.load(q)
+			return self.q
+		else:
+			print "Incorrect answer"
+			return self.load()
 
 	def inputError(self, s):
 		print "Error ----> We didn't understand your input ( "+str(s)+" ) "
