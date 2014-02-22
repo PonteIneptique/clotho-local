@@ -23,6 +23,7 @@ class Export(object):
 	def nodification(self):
 		nodes = [] # [id, label, type, document_id]
 		edges = []
+		triples = [] # lemma, form, sentence
 		orphans = {"edges" : [], "nodes" : []}
 		with self.results.con:
 			cur = self.results.con.cursor()
@@ -34,6 +35,7 @@ class Export(object):
 				lem = "l"+str(row[0])
 				frm = "f"+str(row[1])
 				sen = "s"+str(row[2])
+				triples.append([lem, frm, sen])
 				#Lemma :
 				if row[0] not in self.cache["lemma"]:
 					cur.execute("SELECT text_lemma FROM lemma WHERE id_lemma = %s LIMIT 1", [row[0]])
@@ -70,6 +72,7 @@ class Export(object):
 
 		self.nodes = nodes
 		self.edges = edges
+		self.triples = triples
 		self.orphans = orphans
 
 	def cleanProbability(self):
@@ -90,70 +93,75 @@ class Export(object):
 
 		#We give to our edges the one which are not lemma-form AND the one which have only one possibility
 		edges += [edge for edge in self.edges if edge[2] == "form-sentence"]#(edge[2] == "lemma-form" and len(compute[edge[1]]) <= 1) or 
-
+		newcompute = {}
 		#Then we need to find a way to compute stuff isn't it ?
 		#Basically, we want the one with the biggest compute[lemma] in compute[form]
 		for form in compute: 
-			if isinstance(compute[form], list) and len(compute[form]) > 1 and form[0] == "f":
-				Max = float(0)
-				MaxId = str(0)
-				for lemma in compute[form]:
-					computed = float(0)
-					for form in compute[lemma]:
-						computed += float(1 / float(len(compute[form])))
+			if form[0] == "f":
 
-					if MaxId == 0 or computed > Max:
-						MaxId = lemma
-						Max = computed
+				if len(compute[form]) > 1:
+					Max = float(0)
+					MaxId = str(0)
+					for lemma in compute[form]:
+						computed = float(0)
+						for forms in compute[lemma]:
+							computed += float(1 / float(len(compute[forms])))
 
-				compute[form] = [MaxId]
-		edges2 = [[compute[edge][0], edge, "lemma-form"] for edge in compute if isinstance(compute[edge], list) and edge[0] == "f"]
+						if MaxId == 0 or computed > Max:
+							MaxId = lemma
+							Max = computed
+					newcompute[form] = [MaxId]
+				else:
+					newcompute[form] = compute[form]
+
+		edges2 = [[newcompute[edge][0], edge, "lemma-form"] for edge in newcompute if edge[0] == "f"]
+
 		edges += edges2
 		self.edges = edges
-		print [edge for edge in edges if edge[2] == "lemma-form"]
 		return True
 
-	def lemma(self):
+	def hash(self, l):
+		l = ";".join(l)
+		return hashlib.md5(l).hexdigest()
+
+	def lemma(self, terms = []):
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
+		hashes = [self.hash(edge[0:2]) for edge in self.edges if edge[2] == "lemma-form"]
+		done = []
+		nodesclean = []
 
-		"""
-		if len(self.orphans["nodes"]) > 0:
-			nodes = nodes + self.orphans["nodes"]
-		"""
-		
-		ed = [edge for edge in self.edges if edge[2] == "lemma-sentence"]
-		if len(self.orphans["edges"]) > 0:
-			ed = ed + self.orphans["edges"]
+		#Update triples according to new edges
+		triples = [triple for triple in self.triples if self.hash(triple[0:2]) in hashes]
 		edges = []
-		existing = []
 
-		for e in ed:
-			same = [row for row in ed if row[0] != e[0] and row[1] == e[1]]
-			for edge in same:
-				edg = [e[0], edge[0], edge[1]]
-				h1 = hashlib.md5("".join([e[0], edge[0], edge[1]])).hexdigest()
-				h2 = hashlib.md5("".join([e[0], edge[0], edge[1]])).hexdigest()
-				if h1 not in existing and h2 not in existing:
-					edges.append(edg)
-					existing.append(h1)
+		i = 0
+		while i < len(triples):
+			triple = triples[i]
+			for tripleBis in triples[i:]:
+				if tripleBis[2] == triple[2]:
+					edges.append([triple[0], tripleBis[0], triple[2]])
+					nodesclean.append(triple[0])
+					nodesclean.append(tripleBis[0])
+			i += 1
 
-		#
-		#Updating weight:
-		#
-		self.nodes = nodes
 		self.edges = edges
-		self.weight()
+		nodesclean = list(set(nodesclean))
+		self.nodes = [node for node in nodes if node[0] in nodesclean]
+
+		self.weight(terms = terms)
 
 
-	def weight(self, nodes = False, edges = False, terms = "l4"):
+	def weight(self, nodes = False, edges = False, terms = []):
 		if nodes == False:
 			nodes = self.nodes
 		if edges == False:
 			edges = self.edges
 
+		terms = [node[0] for node in self.nodes if node[1] in terms]
+
 		n = []
 		for node in nodes:
-			e = [row for row in edges if node[0] in row and "l4" in row]
+			e = [row for row in edges if node[0] in row and (row[0] in terms or row[1] in terms)]
 			n.append(node + [len(e)])
 
 		self.nodes = n
@@ -163,7 +171,7 @@ class Export(object):
 		if mode == "lemma":
 			nodesColumn = ["id", "label", "weight"]
 			edgesColumn = ["target", "source", "sentence"]
-			self.weight()
+			#self.weight()
 		else:
 			nodesColumn = ["id", "label", "type", "document"]
 			edgesColumn = ["target", "source", "type"]

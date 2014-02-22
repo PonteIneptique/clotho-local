@@ -141,7 +141,7 @@ if saved == True or q.alreadySaved() == True:
 		gephiMode = "sentence"
 		if q.exportLinkType() == "lemma":
 			gephiMode = "lemma"
-			e.lemma()
+			e.lemma(terms = q.q["terms"])
 			print "Link Lemma->Form->Sentence transformed to Lemma1->Lemma2 if Lemma1 and Lemma2 share a same sentence"
 
 
