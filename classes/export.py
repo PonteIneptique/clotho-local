@@ -78,12 +78,14 @@ class Export(object):
 		#We build an index
 		for edge in self.edges:
 			if edge[2] == "lemma-form":
+				#Lemma
 				if edge[0] not in compute:
-					compute[edge[0]] = 0
+					compute[edge[0]] = []
+				#Form
 				if edge[1] not in compute:
 					compute[edge[1]] = []
 
-				compute[edge[0]] += 1
+				compute[edge[0]].append(edge[1])
 				compute[edge[1]].append(edge[0])
 
 		#We give to our edges the one which are not lemma-form AND the one which have only one possibility
@@ -92,28 +94,33 @@ class Export(object):
 		#Then we need to find a way to compute stuff isn't it ?
 		#Basically, we want the one with the biggest compute[lemma] in compute[form]
 		for form in compute: 
-			if isinstance(compute[form], list) and len(compute[form]) > 1:
-				Max = 0
+			if isinstance(compute[form], list) and len(compute[form]) > 1 and form[0] == "f":
+				Max = float(0)
+				MaxId = str(0)
 				for lemma in compute[form]:
-					if Max == 0:
-						Max = lemma
-					elif compute[lemma] > compute[Max]:
-						Max = lemma
-				compute[form] = [Max]
-		edges += [[compute[edge][0], compute[edge], "lemma-form"] for edge in compute if isinstance(compute[edge], list)]
+					computed = float(0)
+					for form in compute[lemma]:
+						computed += float(1 / float(len(compute[form])))
 
+					if MaxId == 0 or computed > Max:
+						MaxId = lemma
+						Max = computed
 
-		from pprint import pprint
-		pprint(edges)
+				compute[form] = [MaxId]
+		edges2 = [[compute[edge][0], edge, "lemma-form"] for edge in compute if isinstance(compute[edge], list) and edge[0] == "f"]
+		edges += edges2
+		self.edges = edges
+		print [edge for edge in edges if edge[2] == "lemma-form"]
 		return True
-
 
 	def lemma(self):
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
 
+		"""
 		if len(self.orphans["nodes"]) > 0:
 			nodes = nodes + self.orphans["nodes"]
-
+		"""
+		
 		ed = [edge for edge in self.edges if edge[2] == "lemma-sentence"]
 		if len(self.orphans["edges"]) > 0:
 			ed = ed + self.orphans["edges"]
