@@ -89,14 +89,12 @@ class Text(object):
 			#Loading Id of this sentence
 			S = self.r.sentence(sentence)
 			#Loading data
-			tempData = [self.r.load(S)]
+			tempData = self.r.load(S)
 			data = []
 			#Caching some of this data
 			safe = True
-			#<BUG>
-			#tempData return our data in an array [tempData]. So we need to make it flatter by accessing row[0]
-			#</BUG>
-			for row in tempData[0]:
+			
+			for row in tempData:
 				if "Entities" in mode:
 					m = self.m.filter(row[0], row[1], safe, terms)
 				else:
