@@ -121,9 +121,12 @@ class Results(object):
 		]
 		with self.con:
 			for op in operations:
-				cur = self.con.cursor()
-				cur.execute(op)
-				cur.close()
+				try:
+					cur = self.con.cursor()
+					cur.execute(op)
+					cur.close()
+				except:
+					log = op
 
 	def relationship(self, sentence, form, lemma):
 		with self.con:

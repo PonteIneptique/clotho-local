@@ -149,5 +149,5 @@ if saved == True or q.alreadySaved() == True:
 		if exportMean == "gephi":
 			e.gephi(gephiMode)
 			print "Export Done"
-
-			
+		elif exportMean == "d3js-matrix":
+			e.D3JSMatrix()

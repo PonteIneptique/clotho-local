@@ -187,3 +187,63 @@ class Export(object):
 		for edge in self.edges:
 			f.write(separator.join([str(e) for e in edge])+"\n")
 		f.close()
+
+	def clusterNodes(self):
+		nodes = self.nodes
+		return nodes
+
+	def mergeEdges(self):
+		#Merge edges and give them weight
+		newEdges = []
+		indexEdges = {}
+
+		i = 0
+		for edge in self.edges:
+			#Edge : source,target,weight
+			hash1 = self.hash([edge[0], edge[1]])
+			hash2 = self.hash([edge[1], edge[0]])
+
+			if hash1 in indexEdges:
+				newEdges[indexEdges[hash1]][2] += 1
+			elif hash2 in indexEdges:
+				newEdges[indexEdges[hash2]][2] += 1
+			else:
+				newEdges.append([edge[0], edge[1], 1])
+				indexEdges[hash1] = i
+				indexEdges[hash2] = i
+				i += 1
+
+		return newEdges
+
+	def JSON(self, group = False):
+		graph = {"nodes" : [], "links" : []}
+
+		"""
+		node : { "name": "Myriel","group": 1 }
+		edge : {"source": 42, "target": 41, "value": 2 }
+		"""
+
+		NodeIndex = {}
+
+		i = 0
+		for node in self.nodes:
+			if group:
+				graph["nodes"].append({"name" : node[1], "weight" : node[2], "group" : node[3]})
+			else:
+				graph["nodes"].append({"name" : node[1], "weight" : node[2], "group" : 0})
+			NodeIndex[node[0]] = i
+			i += 1
+		for edge in self.edges:
+			graph["links"].append({"source" : NodeIndex[edge[0]], "target": NodeIndex[edge[1]], "value" : edge[2]})
+
+		return graph
+
+	def D3JSMatrix(self):
+		import json
+
+		self.edges = self.mergeEdges()
+		graph = self.JSON()
+
+		with codecs.open("./data/data.json", "w") as f:
+			f.write(json.dumps(graph))
+			f.close()

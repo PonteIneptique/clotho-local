@@ -171,13 +171,21 @@ class Query(object):
 
 
 	def exportMean(self, deco = True):
-		availableMeans = ["gephi"]
+		availableMeans = ["gephi", "d3js-matrix"]
 		if deco:
 			self.deco()
 
-		s = raw_input("Which mean of export do you want to use ? " + " / ".join(availableMeans) + " \n - ").lower()
+		means = []
+		i = 0
+		for mean in availableMeans:
+			means.append( mean + " (" + str( i ) + ") " )
+			i += 1
+
+		s = raw_input("Which mean of export do you want to use ? " + " / ".join(means) + " \n - ").lower()
 		if s in availableMeans:
 			return s
+		elif int(s) < len(availableMeans):
+			return availableMeans[int(s)]
 		else:
 			self.inputError(s)
 			return self.modeGephi(deco = False)

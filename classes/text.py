@@ -95,7 +95,7 @@ class Text(object):
 			safe = True
 			
 			for row in tempData:
-				if "Entities" in mode:
+				if "Auctoritas" in mode:
 					m = self.m.filter(row[0], row[1], safe, terms)
 				else:
 					m = row[1]
