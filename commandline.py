@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import codecs 
+import json
+import hashlib
 
 try:
 	import classes.query as Q
@@ -115,6 +118,14 @@ if q.process():
 				#For each sentence, we now update terms
 				for sentence in sentences:
 					lemma = t.lemmatize(sentence, q.q["mode"], q.q["terms"])
+
+					#CACHING FOR TEST
+					name = "./data/" + hashlib.md5(sentence).hexdigest() + ".json"
+					with codecs.open(name, "w") as f:
+						f.write(json.dumps(lemma))
+						f.close()
+
+
 					for lem in lemma:
 						terms[term].append([lem[0], lem[1], d[1], sentence])
 

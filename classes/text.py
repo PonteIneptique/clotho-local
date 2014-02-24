@@ -120,7 +120,7 @@ class Text(object):
 						m = self.m.morph(word)
 
 						if m == False:
-							d= False
+							d = False
 						else:
 							if self.cache == True:
 								F = self.r.form(word)
@@ -131,13 +131,19 @@ class Text(object):
 									#Make Link
 									self.r.relationship(S, F, L)
 
-							if "Entities" in mode:
+							if "Auctoritas" in mode:
 								m = self.m.filter(word, m, safe, terms)
 
 							d = [word, m]
 							self.learning[word] = m
 					else:
 						#print "Using cache for " + word
+						F = self.r.form(word)
+
+						for Lem in self.learning[word]:
+							L = self.r.lemma(Lem)
+							self.r.relationship(S, F, L)
+
 						d = [word, self.learning[word]]
 
 					if d != False:
