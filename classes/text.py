@@ -56,6 +56,9 @@ class Text(object):
 		self.stopwords = f.read().encode("UTF-8").split(",")
 		f.close()
 
+		#Reg Exp
+		self.regexp = re.compile("Perseus:text:([0-9]{4}\.[0-9]{2}\.[0-9]{4})")
+
 	def metadata(self, identifier):
 		data , l = self.sql.metadata(identifier[1])
 		r = { "identifier" : identifier[1]}
@@ -68,14 +71,69 @@ class Text(object):
 
 	def path(self, identifier):
 		p = "./texts/"
-
+		identifier = self.regexp.search(identifier).group(1)
 		#Typical data : Perseus:text:2008.01.0558
-
-		identifier = identifier.lower().replace("perseus:text:", "")
 		identifier = identifier.split(".")
 		p += ".".join(identifier[:2]) + "/" + ".".join(identifier) + ".xml"
 
 		return p
+
+	def find(self, text, forms):
+		sentences = sent_tokenize(text)
+		correct = []
+		for form in forms:
+
+			i = 0
+			while i < len(sentences):
+				#Last condition ensure that sentences has not been processed
+				if form in word_tokenize(sentences[i]) and sentences[i] not in self.processed:
+					self.processed.append(sentences[i])
+					correct.append(sentences.pop(i))
+				else:
+					i += 1
+		return correct
+
+	def chunk(self, identifier, mode = "mysql"):
+
+		if(mode == "mysql"):
+			f = open(self.path(identifier[1]), "rt")
+			text = f.read()
+			f.close()
+
+			self.text = text;
+
+			return self.section(identifier)
+		elif(mode == "lucene"):
+			f = open(self.path(identifier), "rt")
+			text = f.read()
+			f.close()
+
+			self.text = text;
+
+			return self.section(identifier, mode = mode)
+
+
+	def section(self, identifier, mode = "mysql"):
+		if mode == "mysql":
+			model = BeautifulSoup(identifier[8]+identifier[9])
+			tags = model.find_all(True)
+
+			t = BeautifulSoup(self.text)
+			div1 = t.find(tags[-1].name, tags[-1].attrs)
+			div2 = div1.find(True,{"type" : identifier[3], "n" : identifier[4]})
+			if div2:
+
+				return div2.text.encode("UTF-8")
+			elif div1:
+				return div1.text.encode("UTF-8")
+
+			else:
+				print identifier[1]
+				print div2
+				return ""
+		else:
+			t = BeautifulSoup(self.text)
+			return t.text
 
 	def lemmatize(self, sentence, mode = "Lemma", terms = []):
 		data = []
@@ -152,45 +210,3 @@ class Text(object):
 		
 
 		return data
-
-	def find(self, text, forms):
-		sentences = sent_tokenize(text)
-		correct = []
-		for form in forms:
-
-			i = 0
-			while i < len(sentences):
-				#Last condition ensure that sentences has not been processed
-				if form in word_tokenize(sentences[i]) and sentences[i] not in self.processed:
-					self.processed.append(sentences[i])
-					correct.append(sentences.pop(i))
-				else:
-					i += 1
-		return correct
-
-	def chunk(self, identifier):
-		f = open(self.path(identifier[1]), "rt")
-		text = f.read()
-		f.close()
-
-		self.text = text;
-
-		return self.section(identifier)
-
-	def section(self, identifier):
-		model = BeautifulSoup(identifier[8]+identifier[9])
-		tags = model.find_all(True)
-
-		t = BeautifulSoup(self.text)
-		div1 = t.find(tags[-1].name, tags[-1].attrs)
-		div2 = div1.find(True,{"type" : identifier[3], "n" : identifier[4]})
-		if div2:
-
-			return div2.text.encode("UTF-8")
-		elif div1:
-			return div1.text.encode("UTF-8")
-
-		else:
-			print identifier[1]
-			print div2
-			return ""

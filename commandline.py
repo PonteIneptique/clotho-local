@@ -6,6 +6,8 @@ import codecs
 import json
 import hashlib
 
+
+modes = ["mysql"]
 try:
 	import classes.query as Q
 	q = Q.Query()
@@ -52,6 +54,14 @@ except:
 	print "Unable to load ProgressBar dependency"
 	sys.exit()
 
+try:
+	import classes.PyLucene as PyL
+	if PyL.luceneImport:
+		modes.append("lucene")
+		luc = PyL.PyLucene()
+except:
+	print "Lucene is not available"
+
 q.deco()
 print "\t\tWelcome to Arachne"
 print "\t\tDeveloped by Thibault Clerice (KCL-ENC)"
@@ -70,6 +80,7 @@ if goQuery.lower() == "y":
 	q.lemmas()
 	#Save
 	q.save()
+
 else:
 	q.load()
 
@@ -77,6 +88,7 @@ q.deco()
 
 saved = False
 if q.process():
+	mode = q.databaseMode(modes)
 	#PROCESS
 	terms =  {}
 	"""
@@ -90,7 +102,21 @@ if q.process():
 	pbar = False
 	terms = {}
 	for term in q.q["terms"]:
-		occ, l = s.occurencies(term)
+
+		#We get the morph
+		morphs = m.all(term)
+
+		"""
+		if len(morphs) == 0:
+			newmorphs = q.newmorphs(term)
+			if len(newmorphs) > 0:
+				m.save(newmorphs)
+		"""
+				
+		if mode == "mysql":
+			occ, l = s.occurencies(term)
+		elif mode == "lucene":
+			occ, l = luc.occurencies(term, morphs)
 
 		if pbar != False:
 			pbar.finish()
@@ -99,8 +125,6 @@ if q.process():
 
 		terms[term] = []
 
-		#We get the morph
-		morphs = m.all(term)
 
 		if l > 0:
 			for o in occ:
@@ -109,10 +133,13 @@ if q.process():
 				pbar.update(progress)
 
 				#Getting the chunk
-				d, l = s.chunk(o)
+				if mode == "mysql":
+					d, l = s.chunk(o)
+				elif mode == "lucene":
+					d, l = luc.chunk(o)
 
 				#Reading chunk
-				section = t.chunk(d)
+				section = t.chunk(d, mode = mode)
 				#Now search for our term
 				sentences = t.find(section, morphs)
 				#For each sentence, we now update terms
@@ -120,10 +147,12 @@ if q.process():
 					lemma = t.lemmatize(sentence, q.q["mode"], q.q["terms"])
 
 					#CACHING FOR TEST
-					name = "./data/" + hashlib.md5(sentence).hexdigest() + ".json"
+					"""
+					name = "./cache/" + hashlib.md5(sentence).hexdigest() + ".json"
 					with codecs.open(name, "w") as f:
 						f.write(json.dumps(lemma))
 						f.close()
+					"""
 
 
 					for lem in lemma:

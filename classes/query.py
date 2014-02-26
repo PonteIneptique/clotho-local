@@ -184,7 +184,7 @@ class Query(object):
 		s = raw_input("Which mean of export do you want to use ? " + " / ".join(means) + " \n - ").lower()
 		if s in availableMeans:
 			return s
-		elif int(s) < len(availableMeans):
+		elif  s.isdigit() and int(s) < len(availableMeans):
 			return availableMeans[int(s)]
 		else:
 			self.inputError(s)
@@ -202,3 +202,26 @@ class Query(object):
 		else:
 			self.inputError(s)
 			return self.cleanProbability(deco = False)
+
+	def databaseMode(self, modes, deco = True):
+		if len(modes) == 1:
+			return modes[0]
+
+		if deco:
+			self.deco()
+
+		means = []
+		i = 0
+		for mean in modes:
+			means.append( mean + " (" + str( i ) + ") " )
+			i += 1
+
+		s = raw_input("Which occurrences finding mode do you want to use ? " + " / ".join(means) + " \n - ").lower()
+		
+		if s in modes:
+			return s
+		elif s.isdigit() and int(s) < len(modes):
+			return modes[int(s)]
+		else:
+			self.inputError(s)
+			return self.databaseMode(modes, deco = False)
