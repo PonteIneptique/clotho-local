@@ -240,10 +240,15 @@ class Export(object):
 
 	def D3JSMatrix(self):
 		import json
-
+		import classes.D3JS as D3JS
+		D3 = D3JS.D3JS()
 		self.edges = self.mergeEdges()
 		graph = self.JSON()
 
 		with codecs.open("./data/data.json", "w") as f:
 			f.write(json.dumps(graph))
+			f.close()
+
+		with codecs.open("./data/index.html", "w") as f:
+			f.write(D3.text())
 			f.close()

@@ -5,7 +5,7 @@ import sys
 import codecs 
 import json
 import hashlib
-
+import os
 
 modes = ["mysql"]
 try:
@@ -191,3 +191,9 @@ if saved == True or q.alreadySaved() == True:
 			print "Export Done"
 		elif exportMean == "d3js-matrix":
 			e.D3JSMatrix()
+			filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/index.html"
+			try:
+				import webbrowser
+				webbrowser.open("file://"+filepath,new=2)
+			except:
+				print "File available at " + filepath
