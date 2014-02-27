@@ -151,13 +151,14 @@ if q.process():
 				sentences = t.find(section, morphs)
 				#For each sentence, we now update terms
 				for sentence in sentences:
+					sentence = sentence.encode("UTF-8")
 					lemma = c.sentence(sentence)
 
 					if lemma == False:
 						lemma = t.lemmatize(sentence, mode = q.q["mode"], terms = q.q["terms"])
 						c.sentence(sentence, data = lemma)
 
-					lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"])
+					lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"], stopwords = t.stopwords)
 
 					for lem in lemma:
 						terms[term].append([lem[0], lem[1], d[1], sentence])

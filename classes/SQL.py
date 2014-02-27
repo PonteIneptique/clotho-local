@@ -15,11 +15,11 @@ class SQL(object):
 		try:
 			self.debug = False
 			if results == True:
-				self.con  = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_results');
+				self.con  = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_results', charset='utf8');
 			elif cache == True:
-				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache');
+				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache', charset='utf8');
 			else:
-				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2');
+				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2', charset='utf8');
 
 			if self.debug:
 				cur = self.con.cursor()
@@ -155,7 +155,7 @@ class SQL(object):
 			d = list(cur.fetchall())
 			if len(d) == 1:
 				q["name"] = d[0][2]
-				q["mode"] = d[0][1]
+				q["mode"] = d[0][1].lower()
 
 				cur.execute("SELECT * FROM `python_request_term` WHERE id_request = ' " + str(identifier) + "' ")
 				d = list(cur.fetchall())

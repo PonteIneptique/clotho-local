@@ -85,21 +85,35 @@ class Morph(object):
 				#Returning data
 				return data
 	
-	def filter(self, sentence, mode = "lemma", safemode="", terms = []):
-		if mode == "lemma":
-			return sentence
-
+	def filter(self, sentence, mode = "lemma", safemode="", terms = [], stopwords = []):
 		returned = []
 
+		#First filter stop words
 		for word in sentence:
 			keep = []
 			for lemma in word[1]:
-				if lemma[1] != None:
+				sp = lemma[0].split("#")
+				sp = sp[0].replace("-", "").lower()
+				if sp not in stopwords:
 					keep.append(lemma)
-				elif lemma[0] in terms:
-					keep.append(lemma)
-
 			if len(keep) > 0:
 				returned.append([word[0], keep])
 
-		return returned
+		if mode == "lemma":
+			return returned
+
+		else:
+			sentence = returned
+			returned = []
+			for word in sentence:
+				keep = []
+				for lemma in word[1]:
+					if lemma[1] != None:
+						keep.append(lemma)
+					elif lemma[0] in terms:
+						keep.append(lemma)
+
+				if len(keep) > 0:
+					returned.append([word[0], keep])
+
+			return returned
