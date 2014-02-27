@@ -42,15 +42,22 @@ class PyLucene(object):
 
 	def occurencies(self, term, morphs):
 		query = []
-		print morphs
+		already = []
+
 		for morph in morphs:
 			query.append(morph)
 			#Sometime, when there is doubt about a term, because of xml hashing in Lucene, you would find twice a lemma like wordword
 			query.append(morph+morph)
 
 		results = self.query(query)
-		print query
-		return results, len(results)
+
+		resultsReturned = []
+		for result in results:
+			if result[0] not in already:
+				resultsReturned.append(result)
+				already.append(result[0])
+
+		return resultsReturned, len(resultsReturned)
 
 	def chunk(self, occurency):
 		#Could be updated using the section information but could be only milesone

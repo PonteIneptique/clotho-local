@@ -85,27 +85,21 @@ class Morph(object):
 				#Returning data
 				return data
 	
-	def filter(self, form, data, safemode="", terms = []):
-		#If we have no lemma corresponding to lemma
-		if len(data) == 0:
-			#But if it has a caps as first letter and safemode is off
-			if form[0].isupper():# and safemode == False:
-				#Just to be sure, if form has a caps, we ensure that it is sent back
-				return []
-			else:
-				#If there is no caps first letter return false
-				return False
-		#If we do have data
-		else:
-			#We filter by != None
-			personna = [row for row in data if row[1] != None]
-			if len(personna) == 0:
-				data = [row for row in data if row[0] in terms]
-				if len(data) == 0:
-					return False
-				else:
-					return data
-			else:
-				return personna
+	def filter(self, sentence, mode = "lemma", safemode="", terms = []):
+		if mode == "lemma":
+			return sentence
 
+		returned = []
 
+		for word in sentence:
+			keep = []
+			for lemma in word[1]:
+				if lemma[1] != None:
+					keep.append(lemma)
+				elif lemma[0] in terms:
+					keep.append(lemma)
+
+			if len(keep) > 0:
+				returned.append([word[0], keep])
+
+		return returned

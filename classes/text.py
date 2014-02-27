@@ -153,10 +153,7 @@ class Text(object):
 			safe = True
 			
 			for row in tempData:
-				if "Auctoritas" in mode:
-					m = self.m.filter(row[0], row[1], safe, terms)
-				else:
-					m = row[1]
+				m = row[1]
 				self.learning[row[0]] = m
 				data.append([row[0], m])
 				safe = False

@@ -62,6 +62,13 @@ try:
 except:
 	print "Lucene is not available"
 
+try:
+	import classes.cache as Cache
+	c = Cache.Cache()
+except:
+	print "Unable to load Cache dependency"
+	sys.exit()
+
 q.deco()
 print "\t\tWelcome to Arachne"
 print "\t\tDeveloped by Thibault Clerice (KCL-ENC)"
@@ -144,16 +151,13 @@ if q.process():
 				sentences = t.find(section, morphs)
 				#For each sentence, we now update terms
 				for sentence in sentences:
-					lemma = t.lemmatize(sentence, q.q["mode"], q.q["terms"])
+					lemma = c.sentence(sentence)
 
-					#CACHING FOR TEST
-					"""
-					name = "./cache/" + hashlib.md5(sentence).hexdigest() + ".json"
-					with codecs.open(name, "w") as f:
-						f.write(json.dumps(lemma))
-						f.close()
-					"""
+					if lemma == False:
+						lemma = t.lemmatize(sentence, mode = q.q["mode"], terms = q.q["terms"])
+						c.sentence(sentence, data = lemma)
 
+					lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"])
 
 					for lem in lemma:
 						terms[term].append([lem[0], lem[1], d[1], sentence])
