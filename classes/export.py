@@ -238,12 +238,37 @@ class Export(object):
 
 		return graph
 
-	def D3JSMatrix(self):
+	def threshold(self, threshold = 1):
+		nodes = []
+		deleted = []
+		edges = []
+
+		for node in self.nodes:
+			if node[2] <= threshold:
+				deleted.append(node[0])
+			else:
+				nodes.append(node)
+
+		for edge in self.edges:
+			if edge[0] not in deleted and edge[1] not in deleted:
+				edges.append(edge)
+
+		self.nodes = nodes
+		self.edges = edges
+		return True
+
+	def D3JSMatrix(self, threshold = False):
 		import json
 		import classes.D3JS as D3JS
 		D3 = D3JS.D3JS()
 		self.edges = self.mergeEdges()
+
+
+		if threshold == True:
+			self.threshold(1)
+
 		graph = self.JSON()
+
 
 		with codecs.open("./data/data.json", "w") as f:
 			f.write(json.dumps(graph))

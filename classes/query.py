@@ -203,6 +203,20 @@ class Query(object):
 			self.inputError(s)
 			return self.cleanProbability(deco = False)
 
+
+	def ThresholdOne(self, deco = True):
+		if deco:
+			self.deco()
+
+		s = raw_input("Do you want to clean item with a frequency of 1 ? y/n \n - ").lower()
+		if s == "y":
+			return True
+		elif s == "n":
+			return False
+		else:
+			self.inputError(s)
+			return self.ThresholdOne(deco = False)
+
 	def databaseMode(self, modes, deco = True):
 		if len(modes) == 1:
 			return modes[0]
