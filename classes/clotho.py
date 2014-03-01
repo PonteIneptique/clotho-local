@@ -136,7 +136,6 @@ class Clotho(object):
 		#		[form, lemma, text, sentence]
 		#	]
 		#
-		print rows
 		for row in rows:
 			if row[1] != False:
 				if len(row[1]) == 0:

@@ -194,24 +194,20 @@ exportOnGoing = False
 if saved == True:
 	exportOnGoing = True
 else:
-	last = q.alreadySaved()
-	if last == True:
+	jsonExists = c.search(q.q, check = True)
+	if jsonExists:
+		terms = c.search(q.q)
 		exportOnGoing = True
+		r.clean()
+		for term in terms:
+			r.save(terms[term])
 	else:
-		jsonExists = c.search(q.q, check = True)
-		if jsonExists:
-			terms = c.search(q.q)
-			exportOnGoing = True
-			r.clean()
-			for term in terms:
-				r.save(terms[term])
-		else:
-			print "Cache doesnt exist. Unable to load any data for export"
+		print "Cache doesnt exist. Unable to load any data for export"
 
 
 
 if exportOnGoing == True:
-	if q.exportResults():
+	while q.exportResults():
 		e = Export()
 		e.nodification()
 		print "Nodification done"
@@ -224,13 +220,11 @@ if exportOnGoing == True:
 			if q.cleanProbability():
 				e.cleanProbability();
 
-		gephiMode = "sentence"
-		if q.exportLinkType() == "lemma":
-			gephiMode = "lemma"
-			e.lemma(terms = q.q["terms"])
-			#print "Link Lemma->Form->Sentence transformed to Lemma1->Lemma2 if Lemma1 and Lemma2 share a same sentence"
-
-
+			gephiMode = "sentence"
+			if q.exportLinkType() == "lemma":
+				gephiMode = "lemma"
+				e.lemma(terms = q.q["terms"])
+			
 		if exportMean == "gephi":
 			e.gephi(gephiMode)
 			print "Export Done"
