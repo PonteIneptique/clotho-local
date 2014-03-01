@@ -176,13 +176,13 @@ class Export(object):
 			nodesColumn = ["id", "label", "type", "document"]
 			edgesColumn = ["target", "source", "type"]
 
-		f = codecs.open("./data/nodes.csv", "wt")
+		f = codecs.open("./data/gephi/nodes.csv", "wt")
 		f.write(separator.join(nodesColumn)+"\n")
 		for node in self.nodes:
 			f.write(separator.join([str(n).replace("\\n", " ").replace("\t", " ") for n in node])+"\n")
 		f.close()
 
-		f = codecs.open("./data/edges.csv", "wt")
+		f = codecs.open("./data/gephi/edges.csv", "wt")
 		f.write(separator.join(edgesColumn)+"\n")
 		for edge in self.edges:
 			f.write(separator.join([str(e) for e in edge])+"\n")
@@ -277,11 +277,11 @@ class Export(object):
 
 		graph = self.JSON(group = cluster)
 
-		with codecs.open("./data/data.json", "w") as f:
+		with codecs.open("./data/D3JS/data.json", "w") as f:
 			f.write(json.dumps(graph))
 			f.close()
 
-		with codecs.open("./data/index.html", "w") as f:
+		with codecs.open("./data/D3JS/index.html", "w") as f:
 			f.write(D3.text())
 			f.close()
 
