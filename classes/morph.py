@@ -11,7 +11,7 @@ except:
 	sys.exit()
 
 try:
-	import classes.SQL as SQL
+	from classes.SQL import SQL
 except:
 	print "Error importing MYSQL tool"
 	sys.exit()
@@ -24,7 +24,7 @@ except:
 
 class Morph(object):
 	def __init__(self):
-		self.s = SQL.SQL()
+		self.s = SQL()
 		self.widget = ['Words processed: ', Counter(), ' ( ', Timer() , ' )']
 		self.pbar = False
 		self.processed = 0
@@ -32,6 +32,19 @@ class Morph(object):
 		#Roman numeral regExp
 		romanNumeral = "^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$"
 		self.num = re.compile(romanNumeral)
+
+	def check(self):
+		with self.s.con:
+			cur = self.s.con.cursor()
+			query = cur.execute("SELECT COUNT(*) CNT FROM morph LIMIT 10")
+			data = cur.fetchone()
+			cur.close()
+
+			if int(data[0]) > 0:
+				return True
+			else:
+				return False
+		return False
 
 	def install(self):
 		data = {"lemma" : "", "form" : ""}

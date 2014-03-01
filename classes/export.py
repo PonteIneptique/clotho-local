@@ -276,8 +276,6 @@ class Export(object):
 			self.threshold(1)
 
 		graph = self.JSON(group = cluster)
-		print graph
-
 
 		with codecs.open("./data/data.json", "w") as f:
 			f.write(json.dumps(graph))
@@ -288,3 +286,5 @@ class Export(object):
 			f.close()
 
 
+	def clothoWeb(self):
+		return True

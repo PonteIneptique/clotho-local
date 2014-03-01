@@ -7,43 +7,55 @@ import json
 import hashlib
 import os
 
+try:
+	from classes.initiate import Initiate
+	init = Initiate()
+	if init.check() == False:
+		if init.initiate() == False:
+			print "Unable to initiate the program. Check your rights on this folder."
+			sys.exit()
+
+except:
+	print "Unable to initiate the program. Check your rights on this folder."
+	sys.exit()
+
 modes = ["mysql"]
 try:
-	import classes.query as Q
-	q = Q.Query()
+	from classes.query import Query
+	q = Query()
 except:
 	print "Unable to load Query dependency"
 	sys.exit()
 
 try:
-	import classes.SQL as S
-	s = S.SQL()
+	from classes.SQL import SQL
+	s = SQL()
 except:
 	print "Unable to load SQL dependency"
 	sys.exit()
 try:
-	import classes.text as T
-	t = T.Text()
+	from classes.text import Text
+	t = Text()
 except:
 	print "Unable to load Text dependency"
 	sys.exit()
 
 try:
-	import classes.morph as M
-	m = M.Morph()
+	from classes.morph import Morph
+	m = Morph()
 except:
 	print "Unable to load Morphology dependency"
 	sys.exit()
 
 try:
-	import classes.results as R
-	r = R.Results()
+	from classes.results import Results
+	r = Results()
 except:
 	print "Unable to load Results dependency"
 	sys.exit()
 
 try:
-	import classes.export as Export
+	from classes.export import Export
 except:
 	print "Unable to load Export dependency"
 	sys.exit()
@@ -63,8 +75,8 @@ except:
 	print "Lucene is not available"
 
 try:
-	import classes.cache as Cache
-	c = Cache.Cache()
+	from classes.cache import Cache
+	c = Cache()
 except:
 	print "Unable to load Cache dependency"
 	sys.exit()
@@ -165,6 +177,10 @@ if q.process():
 
 	pbar.finish()
 
+	#Caching results
+	if c.search(q.q, data = terms) == False:
+		print "Unable to cache results. Check your rights on folder /cache/search"
+
 	q.deco()
 	if q.saveResults():
 		r.clean()
@@ -173,10 +189,30 @@ if q.process():
 		print "Results saved"
 		saved = True
 
+exportOnGoing = False
 #To be done
-if saved == True or q.alreadySaved() == True:
+if saved == True:
+	exportOnGoing = True
+else:
+	last = q.alreadySaved()
+	if last == True:
+		exportOnGoing = True
+	else:
+		jsonExists = c.search(q.q, check = True)
+		if jsonExists:
+			terms = c.search(q.q)
+			exportOnGoing = True
+			r.clean()
+			for term in terms:
+				r.save(terms[term])
+		else:
+			print "Cache doesnt exist. Unable to load any data for export"
+
+
+
+if exportOnGoing == True:
 	if q.exportResults():
-		e = Export.Export()
+		e = Export()
 		e.nodification()
 		print "Nodification done"
 
