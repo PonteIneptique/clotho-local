@@ -195,8 +195,12 @@ if saved == True or q.alreadySaved() == True:
 			e.gephi(gephiMode)
 			print "Export Done"
 		elif exportMean == "d3js-matrix":
-			threshold = q.ThresholdOne()
-			e.D3JSMatrix(threshold = threshold)
+
+			cluster = q.clustering()
+
+			threshold = q.thresholdOne()
+
+			e.D3JSMatrix(threshold = threshold, cluster = cluster)
 			filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/index.html"
 			try:
 				import webbrowser

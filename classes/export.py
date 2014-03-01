@@ -257,17 +257,26 @@ class Export(object):
 		self.edges = edges
 		return True
 
-	def D3JSMatrix(self, threshold = False):
+	def D3JSMatrix(self, threshold = False, cluster = False):
 		import json
 		import classes.D3JS as D3JS
 		D3 = D3JS.D3JS()
 		self.edges = self.mergeEdges()
 
+		if cluster == True:
+			try:
+				from classes.LSA import LSA
+			except:
+				print "Unable to load LSA dependency"
+				sys.exit()
+			self.lsa = LSA(nodes = self.nodes, edges = self.edges)
+			self.nodes, self.edges = self.lsa.cluster(building = True)
 
 		if threshold == True:
 			self.threshold(1)
 
-		graph = self.JSON()
+		graph = self.JSON(group = cluster)
+		print graph
 
 
 		with codecs.open("./data/data.json", "w") as f:
@@ -277,3 +286,5 @@ class Export(object):
 		with codecs.open("./data/index.html", "w") as f:
 			f.write(D3.text())
 			f.close()
+
+

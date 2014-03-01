@@ -204,7 +204,7 @@ class Query(object):
 			return self.cleanProbability(deco = False)
 
 
-	def ThresholdOne(self, deco = True):
+	def thresholdOne(self, deco = True):
 		if deco:
 			self.deco()
 
@@ -216,6 +216,19 @@ class Query(object):
 		else:
 			self.inputError(s)
 			return self.ThresholdOne(deco = False)
+
+	def clustering(self, deco = True):
+		if deco:
+			self.deco()
+
+		s = raw_input("Do you want to cluster items ? y/n \n - ").lower()
+		if s == "y":
+			return True
+		elif s == "n":
+			return False
+		else:
+			self.inputError(s)
+			return self.clustering(deco = False)
 
 	def databaseMode(self, modes, deco = True):
 		if len(modes) == 1:
