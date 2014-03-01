@@ -216,20 +216,29 @@ if exportOnGoing == True:
 		e.nodification()
 		print "Nodification done"
 
-		if q.cleanProbability():
-			e.cleanProbability();
+
+		exportMean = q.exportMean()
+
+
+		if exportMean != "mysql":
+			if q.cleanProbability():
+				e.cleanProbability();
 
 		gephiMode = "sentence"
 		if q.exportLinkType() == "lemma":
 			gephiMode = "lemma"
 			e.lemma(terms = q.q["terms"])
-			print "Link Lemma->Form->Sentence transformed to Lemma1->Lemma2 if Lemma1 and Lemma2 share a same sentence"
+			#print "Link Lemma->Form->Sentence transformed to Lemma1->Lemma2 if Lemma1 and Lemma2 share a same sentence"
 
 
-		exportMean = q.exportMean()
 		if exportMean == "gephi":
 			e.gephi(gephiMode)
 			print "Export Done"
+
+		elif exportMean == "mysql":
+			e.ClothoWeb(terms = terms)
+			print "SQL export done"
+
 		elif exportMean == "d3js-matrix":
 
 			cluster = q.clustering()

@@ -4,15 +4,15 @@
 
 import sys
 import codecs
+import hashlib
+from pprint import pprint	
 
 try:
 	import classes.SQL as SQL
 except:
 	print "Error importing MYSQL tool"
-	sys.exit()
-
-import hashlib
-from pprint import pprint		
+	#sys.exit()
+	
 
 class Export(object):
 	def __init__(self):
@@ -286,5 +286,13 @@ class Export(object):
 			f.close()
 
 
-	def clothoWeb(self):
+	def ClothoWeb(self, terms = []):
+		try:
+			from classes.clotho import Clotho
+		except:
+			print "Unable to load clotho web dependency"
+			sys.exit()
+
+		C = Clotho(terms)
+		C.save()
 		return True

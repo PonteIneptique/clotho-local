@@ -171,7 +171,7 @@ class Query(object):
 
 
 	def exportMean(self, deco = True):
-		availableMeans = ["gephi", "d3js-matrix"]
+		availableMeans = ["gephi", "d3js-matrix", "mysql"]
 		if deco:
 			self.deco()
 

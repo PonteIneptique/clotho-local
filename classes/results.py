@@ -11,13 +11,9 @@ except:
 	sys.exit()
 
 class Results(object):
-	def __init__(self, cache = False):
-		if cache == False:
-			self.s = SQL.SQL(results=True)
-			self.con = self.s.con
-		else:
-			self.s = SQL.SQL(cache = True)
-			self.con = self.s.con
+	def __init__(self, cache = False, web = False):
+		self.s = SQL.SQL(cache = cache, web = web)
+		self.con = self.s.con
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 
 	def lemma(self, lemma):
