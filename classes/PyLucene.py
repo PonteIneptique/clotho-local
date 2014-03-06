@@ -13,6 +13,8 @@ try:
 except:
 	luceneImport = False
 
+import re
+
 class PyLucene(object):
 	def __init__(self):
 		if luceneImport:
@@ -27,6 +29,7 @@ class PyLucene(object):
 		directory = DirectoryReader.open(directory)
 		self.analyzer = StandardAnalyzer(Version.LUCENE_30)
 		self.searcher = IndexSearcher(directory)
+		self.regexp = re.compile("(Perseus:text:[0-9]{4}\.[0-9]{2}\.[0-9]{4})")
 
 	def query(self, terms = []):
 		query = QueryParser(Version.LUCENE_30, "text", self.analyzer).parse(" OR ".join(terms))
@@ -36,8 +39,9 @@ class PyLucene(object):
 		results = []
 		for hit in hits.scoreDocs:
 			doc = self.searcher.doc(hit.doc)
-			results.append([doc.get("doc_id").encode("utf-8"), doc.get("head").encode("utf-8")])
+			results.append([self.regexp.search(doc.get("doc_id").encode("utf-8")).group(1), doc.get("head").encode("utf-8")])#, doc.get("doc_id").encode("utf-8")])
 
+		#print results
 		return results
 
 	def occurencies(self, term, morphs):

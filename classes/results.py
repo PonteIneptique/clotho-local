@@ -16,6 +16,12 @@ class Results(object):
 		self.con = self.s.con
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 
+	def db(self):
+		with self.con:
+			cur = self.con.cursor()
+			cur.execute("SELECT DATABASE()")
+			return cur.fetchall()
+
 	def lemma(self, lemma):
 		if lemma[0] in self.saved["lemma"]:
 			return self.saved["lemma"][lemma[0]]
@@ -82,7 +88,9 @@ class Results(object):
 							cur.execute("INSERT INTO sentence (text_sentence, id_document) VALUES ( %s, %s )", [sentence, text])
 						else:
 							cur.execute("INSERT INTO sentence (text_sentence) VALUES ( %s )", [sentence])
+
 						r = self.con.insert_id()
+
 						self.saved["sentence"][sentence] = r
 						return r
 
@@ -139,7 +147,7 @@ class Results(object):
 		for row in rows:
 			if row[1] != False:
 				if len(row[1]) == 0:
-					s = self.sentence(row[3], row[2])
+					s = self.sentence(row[3], text = row[2])
 					l = 0
 					f = self.form(row[0])
 
@@ -147,7 +155,7 @@ class Results(object):
 				else:
 					for lemma in row[1]:
 
-						s = self.sentence(row[3], row[2])
+						s = self.sentence(row[3], text = row[2])
 						l = self.lemma(lemma)
 						f = self.form(row[0])
 

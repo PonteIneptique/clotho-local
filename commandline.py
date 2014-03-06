@@ -49,7 +49,7 @@ except:
 
 try:
 	from classes.results import Results
-	r = Results()
+	r = Results(cache = True)
 except:
 	print "Unable to load Results dependency"
 	sys.exit()
@@ -173,7 +173,7 @@ if q.process():
 					lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"], stopwords = t.stopwords)
 
 					for lem in lemma:
-						terms[term].append([lem[0], lem[1], d[1], sentence])
+						terms[term].append([lem[0], lem[1], d, sentence])
 
 	pbar.finish()
 
@@ -199,6 +199,8 @@ else:
 		terms = c.search(q.q)
 		exportOnGoing = True
 		r.clean()
+		print r.db()
+		print "Going to save"
 		for term in terms:
 			r.save(terms[term])
 	else:

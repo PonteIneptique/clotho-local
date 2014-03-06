@@ -10,6 +10,9 @@ class Clotho(object):
 			from classes.SQL import SQL
 			self.sql = SQL(web=True)
 			self.con = self.sql.con
+
+			self.origin = SQL()
+
 		except:
 			print "Unable to load SQL dependecy"
 		self.terms = terms
@@ -29,6 +32,24 @@ class Clotho(object):
 		#So now, we kind of need the vote for lemma isn't it ?
 		#Then save their vote	def lemma(self, lemma):
 		self.form_vote()
+
+		#Then we save the metadata:
+		self.metadata()
+
+	def metadata(self):
+		with self.con:
+			cur = self.con.cursor()
+			cur.execute("SELECT id_document FROM sentence GROUP BY id_document")
+			documents = [str(row[0]) for row in cur.fetchall()]
+			documents = list(set(documents))
+		with self.origin.con:
+			cur2 = self.origin.con.cursor()
+			for document in documents:
+				cur2.execute("SELECT * FROM metadata WHERE document_id = %s ", [document])
+				meta = cur2.fetchall()
+				for data in meta:
+					cur.execute("INSERT INTO metadata VALUES ( %s , %s , %s , %s , %s , %s , %s )", list(data))
+
 
 
 	def lemma(self, lemma):

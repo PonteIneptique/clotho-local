@@ -4,3 +4,4 @@ data/*
 *.pyc
 classes/*.pyc
 morph/latin.morph.xml
+applyMetadata.py
