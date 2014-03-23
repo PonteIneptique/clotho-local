@@ -5,7 +5,7 @@ import os
 import sys
 
 class Clotho(object):
-	def __init__(self, terms = [], query = []):
+	def __init__(self, terms = [], query_terms = []):
 		try:
 			from classes.SQL import SQL
 			self.sql = SQL(web=True)
@@ -16,13 +16,25 @@ class Clotho(object):
 		except:
 			print "Unable to load SQL dependecy"
 		self.terms = terms
-		self.query = query
+		self.query_terms = query_terms
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 		self.url = {"thesaurus" : "http://www.perseus.tufts.edu/hopper/"}
-		self.pythonUser = 1
+		self.pythonUser = 0
 		self.edges = []
 
+		self.annot_index = {"Place" : 2, "Person" : 1}
+
+	def setup(self):
+		annotation_type = "INSERT INTO `annotation_type` VALUES (1,'Type','Type','dc:Type','lemma')"
+		annotation_value = "INSERT INTO `annotation_value` VALUES (1,'Person','Person',1,'Person'),(2,'Place','Place',1,'Place')"
+		with self.con:
+			cur = self.con.cursor()
+			cur.execute(annotation_type)
+			cur.execute(annotation_value)
+
 	def save(self):
+		#We setup annotations
+		self.setup()
 
 		#First save every form , sentence, lemma
 		#Then save their relationships
@@ -66,31 +78,33 @@ class Clotho(object):
 					if len(d) == 1:
 						return d[0]
 				else:
-					if lemma in self.query:
+					if lemma in self.query_terms:
 						query_lemma = 1
 					else:
 						query_lemma = 0
-					cur.execute("INSERT INTO lemma (text_lemma, query_lemma) VALUES (%s)", [lemma[0], query_lemma])
+					cur.execute("INSERT INTO lemma (text_lemma, query_lemma) VALUES (%s, %s)", [lemma[0], query_lemma])
 					r = self.con.insert_id()
 					self.saved["lemma"][lemma[0]] = r
 
 					if lemma[1] != None:
-						self.thesaurus(r, lemma[1], vote = True)
+						self.annotation(r, lemma[1], vote = True)
 					return r
 
-	def thesaurus(self, id_lemma, name_thesaurus, vote = False):
+	def annotation(self, id_lemma, value, vote = False):
 		with self.con:
 			cur = self.con.cursor()
-			cur.execute("INSERT INTO thesaurus (id_lemma, url_thesaurus, name_thesaurus) VALUES ( %s , %s , %s ) ", [id_lemma, self.url["thesaurus"], name_thesaurus])
+			"""			"""
+
+			cur.execute("INSERT INTO `annotation` (`id_annotation_type`, `id_annotation_value`,`id_user`,`table_target_annotation`,`id_target_annotation`) VALUES ('1' ,%s ,%s ,'lemma',%s); ", [self.annot_index[value], self.pythonUser, id_lemma])
 			r = self.con.insert_id()
 			if vote == True:
-				self.thesaurus_vote(r)
+				self.annotation_vote(r)
 
 
-	def thesaurus_vote(self, id_thesaurus):
+	def annotation_vote(self, id_annotation):
 		with self.con:
 			cur = self.con.cursor()
-			cur.execute("INSERT INTO thesaurus_vote (id_thesaurus, id_user, value) VALUES ( %s , %s , %s ) ", [id_thesaurus, self.pythonUser, 1])
+			cur.execute("INSERT INTO annotation_vote (id_annotation, id_user, value) VALUES ( %s , %s , %s ) ", [id_annotation, self.pythonUser, 1])
 
 	def form(self, form):
 		if form in self.saved["form"]:
