@@ -121,7 +121,8 @@ class Morph(object):
 			for word in sentence:
 				keep = []
 				for lemma in word[1]:
-					if lemma[1] != None:
+					#if lemma[1] != None:
+					if lemma[0][1].isupper() == True:
 						keep.append(lemma)
 					elif lemma[0] in terms:
 						keep.append(lemma)
