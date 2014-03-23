@@ -178,8 +178,14 @@ class Clotho(object):
 		#
 		for row in rows:
 			if row[1] != False:
+				
+				if isinstance(row[2], basestring) != True:
+					id_document = row[2][1]
+				else:
+					id_document = row[2]
+
 				if len(row[1]) == 0:
-					s = self.sentence(row[3], row[2])
+					s = self.sentence(row[3], id_document)
 					l = 0
 					f = self.form(row[0])
 
@@ -187,7 +193,7 @@ class Clotho(object):
 				else:
 					for lemma in row[1]:
 
-						s = self.sentence(row[3], row[2])
+						s = self.sentence(row[3], id_document)
 						l = self.lemma(lemma)
 						f = self.form(row[0])
 
