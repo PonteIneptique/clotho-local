@@ -13,12 +13,12 @@ Download the Perseus Hopper source code. Then, copy the file `sgml/xml/data/lati
 
 From [Perseus databases dump](http://www.perseus.tufts.edu/hopper/opensource/download), download the following files :
 
-	- [Chunks](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_chunks.tar.gz)
-	- [Entities](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_entities.tar.gz)
-	- [Entity Occurencies](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_entity_occurrences.tar.gz)
-	- [Frequencies](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_frequencies.tar.gz)
-	- [Lemmas](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_lemmas.tar.gz)
-	- [Metadata](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/metadata.tar.gz)
+- [Chunks](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_chunks.tar.gz)
+- [Entities](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_entities.tar.gz)
+- [Entity Occurencies](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_entity_occurrences.tar.gz)
+- [Frequencies](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_frequencies.tar.gz)
+- [Lemmas](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/hib_lemmas.tar.gz)
+- [Metadata](http://www.perseus.tufts.edu/hopper/opensource/downloads/data/metadata.tar.gz)
 
 Download all the database files from Perseus in the same folder. Then in the terminal type :
 
