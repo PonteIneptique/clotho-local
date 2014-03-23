@@ -286,7 +286,7 @@ class Export(object):
 			f.close()
 
 
-	def ClothoWeb(self, terms = []):
+	def ClothoWeb(self, terms = [], query = []):
 		try:
 			from classes.clotho import Clotho
 		except:

@@ -232,7 +232,7 @@ if exportOnGoing == True:
 			print "Export Done"
 
 		elif exportMean == "mysql":
-			e.ClothoWeb(terms = terms)
+			e.ClothoWeb(terms = terms, query = q.q["terms"])
 			print "SQL export done"
 
 		elif exportMean == "d3js-matrix":

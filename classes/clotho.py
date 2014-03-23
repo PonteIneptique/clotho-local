@@ -5,7 +5,7 @@ import os
 import sys
 
 class Clotho(object):
-	def __init__(self, terms = False):
+	def __init__(self, terms = [], query = []):
 		try:
 			from classes.SQL import SQL
 			self.sql = SQL(web=True)
@@ -16,6 +16,7 @@ class Clotho(object):
 		except:
 			print "Unable to load SQL dependecy"
 		self.terms = terms
+		self.query = query
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 		self.url = {"thesaurus" : "http://www.perseus.tufts.edu/hopper/"}
 		self.pythonUser = 1
@@ -65,7 +66,11 @@ class Clotho(object):
 					if len(d) == 1:
 						return d[0]
 				else:
-					cur.execute("INSERT INTO lemma (text_lemma) VALUES (%s)", [lemma[0]])
+					if lemma in self.query:
+						query_lemma = 1
+					else:
+						query_lemma = 0
+					cur.execute("INSERT INTO lemma (text_lemma, query_lemma) VALUES (%s)", [lemma[0], query_lemma])
 					r = self.con.insert_id()
 					self.saved["lemma"][lemma[0]] = r
 
