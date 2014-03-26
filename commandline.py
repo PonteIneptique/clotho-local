@@ -82,7 +82,7 @@ except:
 	sys.exit()
 
 q.deco()
-print "\t\tWelcome to Arachne"
+print "\t\tWelcome to Clotho"
 print "\t\tDeveloped by Thibault Clerice (KCL-ENC)"
 q.deco()
 
@@ -163,7 +163,12 @@ if q.process():
 				sentences = t.find(section, morphs)
 				#For each sentence, we now update terms
 				for sentence in sentences:
-					sentence = sentence.encode("UTF-8")
+					"""
+					print type(sentence)
+					print sentence
+					print type(sentence)
+					#sentence = sentence.encode("UTF-8")
+					"""
 					lemma = c.sentence(sentence)
 
 					if lemma == False:

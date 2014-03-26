@@ -22,11 +22,11 @@ class Clotho(object):
 		self.pythonUser = 0
 		self.edges = []
 
-		self.annot_index = {"Place" : 2, "Person" : 1}
+		self.annot_index = {"Place" : 2, "Person" : 1, "Date" : 3, "Site" : 5}
 
 	def setup(self):
-		annotation_type = "INSERT INTO `annotation_type` VALUES (1,'Type','Type','dc:Type','lemma')"
-		annotation_value = "INSERT INTO `annotation_value` VALUES (1,'Person','Person',1,'Person'),(2,'Place','Place',1,'Place')"
+		annotation_type = "INSERT INTO `annotation_type` VALUES (1,'Type','Type','dc:Type','lemma'),(2,'Polyphony','Polyphony','dc:Polyphony','sentence')"
+		annotation_value = "INSERT INTO `annotation_value` VALUES (1,'Person','Person',1,'Person'),(2,'Place','Place',1,'Place'),(3,'Date','Date',1,'Date'),(4,'Irony','Irony',2,'Irony'),(5,'Site','Site',2,'Site')"
 		with self.con:
 			cur = self.con.cursor()
 			cur.execute(annotation_type)
@@ -78,7 +78,7 @@ class Clotho(object):
 					if len(d) == 1:
 						return d[0]
 				else:
-					if lemma in self.query_terms:
+					if lemma[0] in self.query_terms:
 						query_lemma = 1
 					else:
 						query_lemma = 0

@@ -4,6 +4,7 @@
 
 import sys
 import re
+import codecs
 
 try:
 	from bs4 import BeautifulSoup
@@ -96,7 +97,7 @@ class Text(object):
 	def chunk(self, identifier, mode = "mysql"):
 
 		if(mode == "mysql"):
-			f = open(self.path(identifier[1]), "rt")
+			f = codecs.open(self.path(identifier[1]), "r", "UTF-8")
 			text = f.read()
 			f.close()
 
