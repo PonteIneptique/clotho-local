@@ -60,7 +60,48 @@ class Text(object):
 		#Reg Exp
 		self.regexp = re.compile("Perseus:text:([0-9]{4}\.[0-9]{2}\.[0-9]{4})")
 
+
+	def BCEtoInt(self, date):
+	""" Convert a string identifying a date using the BCE suffix by an int formatted date 
+
+	Keyword arguments:
+	date -- a list of string
+	"""
+		toReturn = []
+		for d in date:
+			if "BCE" in d:
+				d = -1 * int(d.replace("BCE", ""))
+			else:
+				d = int(d)
+			toReturn.append(d)
+		return toReturn
+
+	def inDateRange(self, metadata, dateRange):
+	""" Return a bolean given the metadata of a text and a given date range
+
+	Keyword arguments:
+	metadata -- a set of metadata (dictionary)
+	dateRange -- a given date range (tuple of int)
+	"""
+		dateRecognition = re.compile("([0-9]+(?:BCE)?)(?:\-([0-9]+(?:BCE)?))?")
+		if "dc:Date:Created" in metadata:
+			date = dateRecognition.search(metadata["dc:Date:Created"]).groups()
+			date = BCEtoInt(date)
+			print date[0]
+			if len(date) == 2: #We have here a range for the date of creation so we check if one of the two dates are in our own range
+				if (date[0] >= dateRange[0] and date[0] <= dateRange[1]) or (date[1] >= dateRange[0] and date[1] <= dateRange[1]):
+					return True
+			elif len(date) == 1: #If we have only one date
+				if (date[0] >= dateRange[0] and date[0] <= dateRange[1]):
+					return True
+		return False	#any other situation, including  not aving the metadata should return False
+
 	def metadata(self, identifier):
+	""" Returns the metadata for a given text using the MySQL database instead of the XML metadata
+
+	Keyword arguments:
+	identifier -- A list of identifier given by Lucene or MYSQL
+	"""
 		data , l = self.sql.metadata(identifier[1])
 		r = { "identifier" : identifier[1]}
 
@@ -71,6 +112,11 @@ class Text(object):
 		return r
 
 	def path(self, identifier):
+	""" Define the path of a file given its identifier
+
+	Keyword arguments:
+	identifier -- A list of identifier given by Lucene or MYSQL
+	"""
 		p = "./texts/"
 		identifier = self.regexp.search(identifier).group(1)
 		#Typical data : Perseus:text:2008.01.0558
@@ -80,6 +126,12 @@ class Text(object):
 		return p
 
 	def find(self, text, forms):
+	""" Return a list of sentence given some forms
+
+	Keyword arguments:
+	text -- The text in a string format
+	forms -- A list of forms corresponding to the declined query lemma
+	"""
 		sentences = sent_tokenize(text)
 		correct = []
 		for form in forms:
@@ -95,6 +147,12 @@ class Text(object):
 		return correct
 
 	def chunk(self, identifier, mode = "mysql"):
+	""" Return the full text given its identifiers
+
+	Keyword arguments:
+	identifier -- A list of identifier given by Lucene or MYSQL
+	mode -- A string indicating the mode used, as both identifier have different depth and structure
+	"""
 
 		if(mode == "mysql"):
 			f = codecs.open(self.path(identifier[1]), "r", "UTF-8")
@@ -105,7 +163,7 @@ class Text(object):
 
 			return self.section(identifier)
 		elif(mode == "lucene"):
-			f = open(self.path(identifier), "rt")
+			f = codecs.open(self.path(identifier), "r", "UTF-8")
 			text = f.read()
 			f.close()
 
@@ -115,6 +173,12 @@ class Text(object):
 
 
 	def section(self, identifier, mode = "mysql"):
+	""" Return the BeautifulSoup section/node of a text where an occurence should be found
+
+	Keyword arguments:
+	identifier -- A list of identifier given by Lucene or MYSQL
+	mode -- A string indicating the mode used, as both identifier have different depth and structure
+	"""
 		if mode == "mysql":
 			model = BeautifulSoup(identifier[8]+identifier[9])
 			tags = model.find_all(True)
@@ -136,7 +200,16 @@ class Text(object):
 			t = BeautifulSoup(self.text)
 			return t.text
 
-	def lemmatize(self, sentence, mode = "Lemma", terms = []):
+	def lemmatize(self, sentence = "", mode = "Lemma", terms = []):
+    """Given a sentence (string), tokenize it into words 
+    	and return a list with the following structure 
+    	[form, [list of corresponding [lemma, type of lemma]]]
+
+    Keyword arguments:
+    sentence -- A sentence to lemmatize (string)
+    mode -- Either Lemma or Auctoritas, will return all corresponding lemma or only those who are proper nouns (default : "Lemma")
+    terms -- A list of terms which are our query terms
+    """
 		data = []
 
 		cached = False

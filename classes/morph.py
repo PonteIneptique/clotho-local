@@ -76,6 +76,11 @@ class Morph(object):
 
 
 	def morph(self, form):
+	    """Given the form of a word, returns a list of lemma and their type
+
+	    Keyword arguments:
+	    form -- a lemma's form (string)
+	    """
 		if self.pbar == False:
 			self.pbar = ProgressBar(widgets=self.widget, maxval=100000).start()
 

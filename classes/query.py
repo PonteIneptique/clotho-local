@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import re
 try:
 	import classes.SQL as SQL
 except:
@@ -16,11 +17,20 @@ class Query(object):
 			"terms" : [],
 			"mode" : ""
 		}
+		self.dateRegexp = re.compile("(-?[0-9]+|\?)\;(-?[0-9]+|\?)")
 		self.sql = SQL.SQL()
 
 
 	def deco(self):
 		print "\n*******************************************************\n"
+
+	def threshold(self, error = False):
+		if error == True:
+			print "Unrecognized input"
+		else:
+			print "Choose your threshold"
+		self.q["threshold"] = raw_input("Format your threshold like beginning-end  : \n y/n - ")
+		#Checking
 
 	def config(self):
 		self.deco()
@@ -29,6 +39,14 @@ class Query(object):
 
 		print "Choose your modes :"
 		self.q["mode"] = raw_input("Available : Entities | Lemma | Entities,Lemma : \n - ")
+		print "You choosed " + self.q["mode"]
+
+		self.q["threshold"] = raw_input("Do you want to apply a date threshold  : \n y/n - ").lower()
+		if self.q["threshold"] == "y":
+			print "Choose your threshold"
+			self.q["threshold"] = raw_input("Format your threshold like beginning-end  : \n y/n - ")
+		else:
+			self.q["threshold"] = "n"
 		print "You choosed " + self.q["mode"]
 
 	def lemmas(self):
