@@ -27,6 +27,8 @@ class LSA(object):
 		self.matrix = mat(zeros([len(self.nodes), len(self.nodes)]), int)
 
 	def build(self):
+		""" Build a matrix, needs an instance of self
+		"""
 		for node in self.nodes:
 			self.wdict[node[0]] = self.wcount
 			self.wcount += 1
@@ -40,6 +42,11 @@ class LSA(object):
 		return self.matrix
 
 	def cluster(self, building = False):
+		""" Cluster a matrix
+
+		keywords argument:
+		building -- Whether the matrix should be build before or not.
+		"""
 		if building == True:
 			self.build()
 
@@ -53,6 +60,8 @@ class LSA(object):
 		return self.nodes, self.edges
 
 	def findzeros(self):
+		""" Return the number of 0 in the matrix
+		"""
 		z =0
 		if 0 in self.matrix.flat:
 			z += 1

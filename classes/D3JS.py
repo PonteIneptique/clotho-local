@@ -2,6 +2,8 @@
 class D3JS(object):
 
 	def text(self):
+    """ Return a string containing a basic html page.
+    """
 		return """
 		<!DOCTYPE html>
 <html><head>

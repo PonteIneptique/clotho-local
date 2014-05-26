@@ -35,9 +35,16 @@ class SQL(object):
 
 
 	def escape(self, string):
+		""" Return a mysql escaped string
+
+		keywords argument:
+		string -- String to be escaped
+		"""
 		return mdb.escape_string(string)
 		
 	def resConnection(self):
+		""" Test the connection to the MySQL DB "results"
+		"""
 		try:
 			self.results  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
 
@@ -53,6 +60,8 @@ class SQL(object):
 
 
 	def check(self):
+		"""	Return a boolean indicating if this programm tables are presents
+		"""
 		with self.con:
 			cur = self.con.cursor()
 			req = "SHOW TABLES LIKE 'python_request' "
@@ -63,6 +72,11 @@ class SQL(object):
 				return True
 
 	def saveMorph(self, morph):
+		""" Save a new morph
+
+		keywords arguments
+		morph -- a dictionary with a lemma key and a morph key
+		"""
 		with self.con:
 			cur = self.con.cursor()
 			req = "INSERT INTO `morph` (`lemma_morph`,`form_morph`) VALUES ('" + morph["lemma"] + "','" + morph["form"] + "');"
@@ -70,6 +84,8 @@ class SQL(object):
 		self.con.commit()
 
 	def create(self):
+		""" Creates this software's MySQL tables
+		"""
 		with self.con:
 			cur = self.con.cursor()
 			pRequest = "CREATE TABLE IF NOT EXISTS `python_request` (  `id_request` int(11) NOT NULL AUTO_INCREMENT,  `mode_request` varchar(255) DEFAULT NULL,  `name_request` varchar(45) DEFAULT NULL,  PRIMARY KEY (`id_request`)) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8"
@@ -81,6 +97,14 @@ class SQL(object):
 
 
 	def lemma(self, query, numeric = False):
+		""" Return a dictionary where the key is a numeric identifier and the value is a list
+		where the data are the lemma unique identifier, lemma's text, the bare headword and the lemma short definition
+
+		key arguments
+		query -- A string or an int refering to the lemma identifier or spelling
+		numeric -- a boolean indicating if the query is a numeric identifier
+
+		"""
 		data = {}
 		cur = self.con.cursor()
 		if numeric == False:
@@ -98,6 +122,11 @@ class SQL(object):
 		return data, len(rows)
 
 	def chunk(self, query):
+		""" Return MySQL data about a chunk
+
+		keywords arguments
+		query --- The id of an element
+		"""
 		data = []
 		cur = self.con.cursor()
 		cur.execute("SELECT * FROM perseus.hib_chunks WHERE id='" + query + "'")
@@ -107,6 +136,11 @@ class SQL(object):
 		return row, len(row)
 
 	def metadata(self, query):
+		""" Return a 2-tuple where the first element is a list of metadata and the second the number of different metadata crawled
+
+		keywords arguments
+		query -- The Perseus document string identifier 
+		"""
 		data = []
 		cur = self.con.cursor()
 		cur.execute("SELECT key_name, value FROM perseus.metadata WHERE document_id='" + query + "'")
@@ -121,6 +155,11 @@ class SQL(object):
 		return data, len(rows)
 
 	def occurencies(self, query):
+		""" For a given word, returns a list of occurences and its number
+
+		keywords arguments
+		query -- A lemma
+		"""
 		data = []
 		cur = self.con.cursor()
 
@@ -140,6 +179,11 @@ class SQL(object):
 		return data, len(rows)
 
 	def load(self, identifier = False):
+		""" Returns a list of saved Clotho request or returns one and set it as the actual request
+
+		keywords arguments
+		identifier -- (Default false) When set, returns the parameters of a given query
+		"""
 		data = []
 		cur = self.con.cursor()
 
@@ -168,6 +212,11 @@ class SQL(object):
 
 
 	def save(self, item):
+		""" Save a clotho request
+
+		keywords arguments
+		item -- A dictionary with three parameters : a list of terms, a mode and a name
+		"""
 		with self.con:
 			cur = self.con.cursor()
 			cur.execute("INSERT INTO `python_request` (`mode_request`,`name_request`) VALUES ('" + item["mode"] + "','" + item["name"] + "');")
