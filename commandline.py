@@ -245,7 +245,7 @@ if exportOnGoing == True:
 			threshold = q.thresholdOne()
 
 			e.D3JSMatrix(threshold = threshold, cluster = cluster)
-			filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/index.html"
+			filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/D3JS/index.html"
 			try:
 				import webbrowser
 				webbrowser.open("file://"+filepath,new=2)
