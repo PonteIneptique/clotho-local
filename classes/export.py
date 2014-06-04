@@ -17,7 +17,7 @@ except:
 class Export(object):
 	def __init__(self):
 		self.perseus = SQL.SQL()
-		self.results = SQL.SQL(True)
+		self.results = SQL.SQL(cache = True, web = False)
 		self.cache = {"lemma" : {}, "sentence" : {}, "form": {}}
 
 	def nodification(self):

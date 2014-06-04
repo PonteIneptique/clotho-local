@@ -49,7 +49,7 @@ class LSA(object):
 		"""
 		if building == True:
 			self.build()
-
+			
 		clustering = spectral_clustering(self.matrix)
 
 		i = 0

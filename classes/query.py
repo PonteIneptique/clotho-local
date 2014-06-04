@@ -146,7 +146,7 @@ class Query(object):
 			return False
 		else:
 			self.inputError(s)
-			return self.export(deco = False)
+			return self.exportResults(deco = False)
 
 	def process(self, deco = True):
 		if deco:
@@ -233,7 +233,7 @@ class Query(object):
 			return False
 		else:
 			self.inputError(s)
-			return self.ThresholdOne(deco = False)
+			return self.thresholdOne(deco = False)
 
 	def clustering(self, deco = True):
 		if deco:

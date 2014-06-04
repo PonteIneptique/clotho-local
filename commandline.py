@@ -204,8 +204,7 @@ else:
 		terms = c.search(q.q)
 		exportOnGoing = True
 		r.clean()
-		print r.db()
-		print "Going to save"
+		print "Saving"
 		for term in terms:
 			r.save(terms[term])
 	else:
@@ -218,7 +217,6 @@ if exportOnGoing == True:
 		e = Export()
 		e.nodification()
 		print "Nodification done"
-
 
 		exportMean = q.exportMean()
 
