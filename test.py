@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import re
+import os
 
-metadata = {"dc:Date:Created" : "20BCE-50"}
-dateRange = (-21,21)
-
+filename = "./cache/mysql/hib_lemmas.tar.gz"
+print os.path.isfile(filename)

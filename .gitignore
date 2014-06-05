@@ -1,7 +1,9 @@
 texts/*
 cache/*
 data/*
+dependencies/*
 *.pyc
 classes/*.pyc
 morph/latin.morph.xml
 applyMetadata.py
+*.tmp

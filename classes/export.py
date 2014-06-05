@@ -20,6 +20,15 @@ class Export(object):
 		self.results = SQL.SQL(cache = True, web = False)
 		self.cache = {"lemma" : {}, "sentence" : {}, "form": {}}
 
+
+		###Load treetagger if possible
+		try:
+			from dependencies.treetagger import TreeTagger
+			self.tt = TreeTagger(encoding='latin-1',language='latin')
+			self.ttAvailable = True
+		except:
+			self.ttAvailable = False
+
 	def nodification(self):
 		nodes = [] # [id, label, type, document_id]
 		edges = []
@@ -75,7 +84,36 @@ class Export(object):
 		self.triples = triples
 		self.orphans = orphans
 
+	def useTT(self):
+		""" Use TreeTagger to improve the probability feature, creating a new dictionnary where the key is the sentence and the value is a list of found lemma
+		"""
+
+		#First we need to get last lemma id and get id for each lemma
+		ret = {}
+		sentences = [node for node in self.nodes if node[2] == "sentence"]
+		for sentence in sentences:
+			results = self.tt.tag(sentence[1][0].encode('latin-1', "ignore"))
+			ret[sentence[0]] = []
+			for lemma in [r[2].split("|") for r in results]:
+				ret[sentence[0]] += lemma
+			ret[sentence[0]] = list(set(ret[sentence[0]]))
+		return ret
+
+	def cleanLemma(self, lemma):
+		"""	Deletes number "#" from lemma in list of lemma
+		"""
+		ret = []
+		for lem in lemma:
+			ret.append(lem.split("#")[0])
+		return list(set(ret))
+
 	def cleanProbability(self):
+		print self.cache["lemma"]
+		if self.ttAvailable == True:
+			pass
+			#computeEdges = self.edges + self.useTT()
+		else:
+			computeEdges = self.edges
 		edges = []
 		compute = {}
 		#We build an index
@@ -98,7 +136,7 @@ class Export(object):
 		#Basically, we want the one with the biggest compute[lemma] in compute[form]
 		for form in compute: 
 			if form[0] == "f":
-
+				compute[form] = self.cleanLemma(compute[form])
 				if len(compute[form]) > 1:
 					Max = float(0)
 					MaxId = str(0)

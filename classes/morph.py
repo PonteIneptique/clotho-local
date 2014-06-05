@@ -3,7 +3,8 @@
 
 import sys
 import re
-
+import json
+from string import digits
 try:
 	from xml.etree.cElementTree import iterparse
 except:
@@ -17,6 +18,11 @@ except:
 	sys.exit()
 
 try:
+	from classes.cache import Cache
+except:
+	print "Unable to load classes.cache "
+	sys.exit()
+try:
 	from progressbar import ProgressBar, Counter, Timer
 except:
 	print "Error importing progress bar "
@@ -28,10 +34,57 @@ class Morph(object):
 		self.widget = ['Words processed: ', Counter(), ' ( ', Timer() , ' )']
 		self.pbar = False
 		self.processed = 0
+		#
+		self.web = True	#If set to true, use perseids database instead, crawling json
+		self.cache = Cache()
 
 		#Roman numeral regExp
 		romanNumeral = "^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$"
 		self.num = re.compile(romanNumeral)
+
+		try:
+			import requests
+			self.r = requests
+		except:
+			print "Unable to load Request. http://docs.python-requests.org/en/latest/user/install/#install"
+			self.web = False
+
+	def perseid(self, lemma):
+		"""	Returns a lemma according to perseid morphology service
+		***HIGHLY EXPERIMENTAL, use with care***
+
+
+		"""
+		url = "http://services.perseids.org/bsp/morphologyservice/analysis/word?word=" + lemma +"&lang=lat&engine=morpheuslat"
+		headers = {
+			'content-type': 'application/json',
+			'accept' : 'application/json, text/javascript'
+		}
+		j = []
+		r = self.r.get(url, headers=headers)
+		r.raise_for_status()
+		try:
+			j = json.loads(r.text)
+		except:
+			print "Perseid returned unreadable json"
+			print r.text
+			sys.exit()
+
+		if u'Body' in j[u'RDF'][u'Annotation']:
+			responseBody = j[u'RDF'][u'Annotation'][u'Body']
+			if isinstance(responseBody, list):
+				ret = []
+				for item in responseBody:
+					ret.append(item[ u'rest'][u'entry'][u'dict'][u'hdwd'][u'$'].translate({ord(c): None for c in digits}))
+				return ret
+			else:
+				try:
+					return [j[u'RDF'][u'Annotation'][u'Body'][ u'rest'][u'entry'][u'dict'][u'hdwd'][u'$'].translate({ord(c): None for c in digits})]
+				except:
+					return []
+		else:
+			return []
+		#http://services.perseids.org/bsp/morphologyservice/analysis/word?word=vos&lang=lat&engine=morpheuslat
 
 	def check(self):
 		with self.s.con:
@@ -75,6 +128,27 @@ class Morph(object):
 			return data
 
 
+	def cleanLemma(self, r):
+		if r == None:
+			return None
+		if r[0]:
+			l = r[0].split(u"#")[0]
+		else:
+			l = None
+		if r[1] == None:
+			return [l, None]
+		else:
+			return [l, r[1]]
+
+	def cleanDuplicate(self, data):
+		exist = []
+		ret = []
+		for d in data:
+			if d[0] not in exist:
+				exist.append(d[0])
+				ret.append(d)
+		return ret
+
 	def morph(self, form):
 		"""Given the form of a word, returns a list of lemma and their type
 
@@ -89,12 +163,34 @@ class Morph(object):
 		elif len(form) == 1:
 			return False
 		else:
+			if self.web == True:
+				#Check if cache exist
+				data = self.cache.form(form)
+				if data != False:
+					return [[d, None] for d in data]
+
+				#if not, check perseid
+				data = self.perseid(form)
+
+				#If we got data, cache it and return it
+				if len(data) > 0:
+					self.cache.form(form, data = data)
+					return [[d, None] for d in data]
+				else:
+					self.cache.form(form, data = [])
 			with self.s.con:
 				cur = self.s.con.cursor()
 
 				req = cur.execute("SELECT morph.lemma_morph, hib_entities.entity_type FROM morph LEFT JOIN hib_entities ON (hib_entities.display_name = morph.lemma_morph AND hib_entities.entity_type != \"Lemma\") WHERE form_morph= %s ", [form])
 				rows = cur.fetchall()
-				data = [list(row) for row in rows]
+				data = []
+
+				for row in rows:
+					r = list(row)
+					data.append(self.cleanLemma(r))
+
+				if isinstance(data, list):
+					self.cleanDuplicate(data)
 
 				#Update Progress bar
 				self.processed += 1

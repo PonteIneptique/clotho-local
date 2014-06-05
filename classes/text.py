@@ -211,10 +211,11 @@ class Text(object):
 
 		cached = False
 		#Caching
-		if self.cache == True:
-			cached = self.r.sentence(sentence, boolean = True)
+		#if self.cache == True:
+		#	cached = self.r.sentence(sentence, boolean = True)
 
 		if cached:
+			print cached
 			#Loading Id of this sentence
 			S = self.r.sentence(sentence)
 			#Loading data

@@ -5,7 +5,7 @@ This project aims to create network of occurences and auctoritas using Perseus d
 
 ##License and authorship
 - The file `/morph/latin.morph.xml` is distributed with the Perseus Hopper source, which is (according only to the sourceforge project listing) licensed under the Mozilla Public License 1.1 (MPL 1.1)
-- The file `/morph/stopwords.xml` comes fro http://wiki.digitalclassicist.org/Stopwords_for_Greek_and_Latin
+- The file `/morph/stopwords.xml` comes from http://wiki.digitalclassicist.org/Stopwords_for_Greek_and_Latin
 
 ##Installation for Ubuntu
 

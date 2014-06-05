@@ -24,6 +24,12 @@ class Query(object):
 	def deco(self):
 		print "\n*******************************************************\n"
 
+	def welcome(self):
+		self.deco()
+		print "\t\tWelcome to Clotho"
+		print "\t\tDeveloped by Thibault Clerice (KCL-ENC)"
+		self.deco()
+
 	def threshold(self, error = False):
 		if error == True:
 			print "Unrecognized input"

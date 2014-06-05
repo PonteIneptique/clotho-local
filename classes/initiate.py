@@ -23,6 +23,12 @@ class Initiate(object):
 		if os.path.exists("./cache/search") == False:
 			os.mkdir("./cache/search")
 
+		if os.path.exists("./cache/form") == False:
+			os.mkdir("./cache/form")
+
+		if os.path.exists("./cache/download") == False:
+			os.mkdir("./cache/download")
+
 		if os.path.exists("./data/gephi") == False:
 			os.mkdir("./data/gephi")
 

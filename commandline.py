@@ -81,10 +81,7 @@ except:
 	print "Unable to load Cache dependency"
 	sys.exit()
 
-q.deco()
-print "\t\tWelcome to Clotho"
-print "\t\tDeveloped by Thibault Clerice (KCL-ENC)"
-q.deco()
+q.welcome()
 
 if s.check() == False:
 	q.deco()
@@ -174,7 +171,7 @@ if q.process():
 					if lemma == False:
 						lemma = t.lemmatize(sentence, mode = q.q["mode"], terms = q.q["terms"])
 						c.sentence(sentence, data = lemma)
-
+						
 					lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"], stopwords = t.stopwords)
 
 					for lem in lemma:

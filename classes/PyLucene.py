@@ -36,12 +36,21 @@ class PyLucene(object):
 		MAX = 1000
 		hits = self.searcher.search(query, MAX)
 
+		resTemp = []
 		results = []
+		done = {}
 		for hit in hits.scoreDocs:
 			doc = self.searcher.doc(hit.doc)
-			results.append([self.regexp.search(doc.get("doc_id").encode("utf-8")).group(1), doc.get("head").encode("utf-8")])#, doc.get("doc_id").encode("utf-8")])
+			resTemp.append([self.regexp.search(doc.get("doc_id").encode("utf-8")).group(1), doc.get("head").encode("utf-8")])#, doc.get("doc_id").encode("utf-8")])
 
 		#print results
+		for res in resTemp:
+			if res[0] not in done:
+				done[res[0]] = [res[1]]
+				results.append(res)
+			elif res[1] not in done[res[0]]:
+				done[res[0]].append(res[1])
+				results.append(res)
 		return results
 
 	def occurencies(self, term, morphs):
