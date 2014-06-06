@@ -353,5 +353,7 @@ class Export(object):
 			sys.exit()
 
 		sm = SMa(nodes = self.nodes, edges = self.edges, terms = terms)
-		sm.pprint()
 		sm.dbpedia()
+		sm.documents()
+		sm.matrixify()
+		sm.tfidf()

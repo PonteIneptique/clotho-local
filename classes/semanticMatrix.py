@@ -3,9 +3,11 @@
 
 import rdflib
 import wikipedia
+from pprint import pprint
 from classes.cache import Cache
 from models.Term import Term
 from SPARQLWrapper import SPARQLWrapper, JSON
+from math import log
 
 class SMa(object):
 	def __init__(self, nodes = [], edges = [], terms = [], prevent = False):
@@ -139,16 +141,85 @@ class SMa(object):
 
 			self.semes[self.lemma[lem]] = Term(l)
 
-
-			
-
-
 	def documents(self):
 		"""	Returns a list of document given nodes and edges so we can perform tf-idf 
 
 		Keyword arguments :
 		"""
+		properties = {}
+		reversedProperties = {}
+		document = {}
+
+		for exempla in self.semes:
+			seme = self.semes[exempla]
+			if exempla not in document:
+				document[exempla] = []
+			for propertyItem in seme.graph:
+				for prop in seme.graph[propertyItem]:
+					pprop = propertyItem + ":" + prop
+					if pprop not in properties:
+						l = len(properties)
+						properties[pprop] = l
+						reversedProperties[l] = pprop
+					document[exempla].append(properties[pprop])
+
+
+		self.document = document
+		self.properties = properties
+		self.reversedProperties = reversedProperties
 		return True
+
+	def matrixify(self):
+		m = []
+		#We get all terms
+		for term in self.terms:
+			t = []
+			#We get all linked lemma
+			for edge in [e for e in self.edges if term in e]:
+				if edge[0] == term:
+					otherEdge = edge[1]
+				else:
+					otherEdge = edge[0]
+				if otherEdge not in self.terms:
+					#Now we get the document informations
+					t += self.document[self.lemma[otherEdge]]
+			#Just a temp check
+			#t = [self.reversedProperties[prop] for prop in t]
+			#End temp check
+			if len(t) > 0:
+				m.append(t)
+			else:
+				self.terms[term] = False
+
+		#Now we have a matrix with ids of item, now let make a real matrix
+		matrix = []
+		for mm in m:
+			t = [0]*len(self.properties) #We fill the matrix
+			for e in mm:
+				t[e] += 1
+			matrix.append(t)
+
+		self.matrix = matrix
+		return self.matrix
+
+
+	def tfidf(self):
+		tfidf_matrix = []
+		#TF = frequency in first list / max frequency available in document
+		for term_matrix in self.matrix:
+			term_tfidf_matrix = [0]*len(term_matrix)
+			print max (term_matrix)
+			maxTF = float(max(term_matrix))
+			i = 0
+			for term in term_matrix:
+				tf = float(term) / maxTF
+				idf = float(len(term_matrix)) / (1.0 + float(len([1 for other_matrix in self.matrix if other_matrix[i] != 0])))
+				term_tfidf_matrix[i] = tf * log(idf)
+				i += 1
+			tfidf_matrix.append(term_tfidf_matrix)
+
+		self.tfidf_matrix = tfidf_matrix
+		print tfidf_matrix
 
 	def pprint(self):
 		print self.semes
