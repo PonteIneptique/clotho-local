@@ -30,6 +30,8 @@ class Export(object):
 			self.ttAvailable = False
 
 	def nodification(self):
+		"""	Using SQL, retrieve the nodes and links so everything works with export
+		"""
 		nodes = [] # [id, label, type, document_id]
 		edges = []
 		triples = [] # lemma, form, sentence
@@ -108,7 +110,9 @@ class Export(object):
 		return list(set(ret))
 
 	def cleanProbability(self):
-		print self.cache["lemma"]
+		"""	Clean the probability
+			-> Use self. data
+		"""
 		if self.ttAvailable == True:
 			pass
 			#computeEdges = self.edges + self.useTT()
@@ -163,6 +167,11 @@ class Export(object):
 		return hashlib.md5(l).hexdigest()
 
 	def lemma(self, terms = []):
+		""" Given a list of terms, transform a graph lemma -> form -> sentence into lemma <-> lemma
+
+		Keyword arguments
+		terms --- List of query terms (lemma people are looking form)
+		"""
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
 		hashes = [self.hash(edge[0:2]) for edge in self.edges if edge[2] == "lemma-form"]
 		done = []
@@ -334,3 +343,15 @@ class Export(object):
 		C = Clotho(terms)
 		C.save()
 		return True
+
+	def semanticMatrix(self, terms = [], query = []):
+		""" Semantic matrix """
+		try:
+			from classes.semanticMatrix import SMa
+		except:
+			print "Unable to load Semantic Matrix Class"
+			sys.exit()
+
+		sm = SMa(nodes = self.nodes, edges = self.edges, terms = terms)
+		sm.pprint()
+		sm.dbpedia()

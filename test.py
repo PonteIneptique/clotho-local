@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import os
+from classes.semanticMatrix import SMa
 
-filename = "./cache/mysql/hib_lemmas.tar.gz"
-print os.path.isfile(filename)
+sma = SMa(prevent = True)
+sma.lemma = {"125" : "Cicero", "984" : "Vergilius"}
+sma.dbpedia()

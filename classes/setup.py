@@ -52,7 +52,9 @@ class Setup(object):
 			"bs4" : "beautifulsoup4", 
 			"nltk" : "nltk",
 			"requests" : "requests",
-			"wget" : "wget"
+			"wget" : "wget",
+			"rdflib" : "rdflib",
+			"wikipedia" : "wikipedia"
 		}
 
 		#Imports  which needs dl and tar gz

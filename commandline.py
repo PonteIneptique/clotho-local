@@ -222,10 +222,11 @@ if exportOnGoing == True:
 			if q.cleanProbability():
 				e.cleanProbability();
 
-			gephiMode = "sentence"
-			if q.exportLinkType() == "lemma":
-				gephiMode = "lemma"
-				e.lemma(terms = q.q["terms"])
+			if exportMean != "semantic-matrix":
+				gephiMode = "sentence"
+				if q.exportLinkType() == "lemma":
+					gephiMode = "lemma"
+					e.lemma(terms = q.q["terms"])
 			
 		if exportMean == "gephi":
 			e.gephi(gephiMode)
@@ -248,3 +249,8 @@ if exportOnGoing == True:
 				webbrowser.open("file://"+filepath,new=2)
 			except:
 				print "File available at " + filepath
+
+		elif exportMean == "semantic-matrix":
+			# It is needed for Export.semanticMatrix() to have lemma-lemma links """
+			e.lemma(terms = q.q["terms"])
+			e.semanticMatrix(terms = q.q["terms"])

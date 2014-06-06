@@ -12,7 +12,9 @@ class Cache(object):
 		self.folder = {
 			"sentence" : "./cache/sentence/",
 			"search" : "./cache/search/",
-			"form" : "./cache/form/"
+			"form" : "./cache/form/",
+			"dbpedia" : "./cache/dbpedia/",
+			"rdf" : "./cache/rdf/"
 		}
 	def tUoB(self, obj, encoding='utf-8'):
 		if isinstance(obj, basestring):
@@ -40,28 +42,51 @@ class Cache(object):
 		sentence --- A string by default in mode sentence or a dictionary in mode search
 		mode --- Type of hash to retrieve (default = sentence)
 		"""
-		return self.hash(sentence, mode = mode) + ".json"
+		if mode == "rdf":
+			return self.hash(sentence, mode = mode) + ".rdf"
+		else:
+			return self.hash(sentence, mode = mode) + ".json"
 
 
 	def cache(self, query, mode, data = False, check = False):
+		""" Read, write or check if there is a cache for given identifiers
+
+		query -- filename
+		mode -- An element from self.folder
+		data -- Either a json convertable object,  an instance of file to be written or an instance of requests lib results
+		check -- If set to true, only perform a check if cache is available or not.
+		"""
 		filename = self.filename(query, mode)
 		filename = self.folder[mode] + filename
 
 		if data == False:
 			if os.path.isfile(filename):
 				if check == True:
+					if mode == "rdf":
+						return filename
 					return True
 				else:
-					with codecs.open(filename, "r") as f:
+					with codecs.open(filename, "r", "utf-8") as f:
 						d = json.load(f)
 						f.close()
 						return d
 			return False
 		else:
-			with codecs.open(filename, "w") as f:
-				d = f.write(json.dumps(data))
+			with codecs.open(filename, "w", "utf-8") as f:
+				if hasattr(data , "read"):
+					d = f.write(data.read())
+				elif hasattr(data , "text"):
+					d = f.write(data.text)
+				else:
+					d = f.write(json.dumps(data))
 				f.close()
 			return True	
+
+	def rdf(self, url, data = False, check = False):
+		return self.cache(url, "rdf", data, check)
+
+	def dbpedia(self, url, data = False, check = False):
+		return self.cache(url, "dbpedia", data, check)
 
 	def form(self, word, data = False, check = False):
 		return self.cache(word, "form", data, check)
