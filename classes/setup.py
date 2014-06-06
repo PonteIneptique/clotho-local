@@ -54,7 +54,8 @@ class Setup(object):
 			"requests" : "requests",
 			"wget" : "wget",
 			"rdflib" : "rdflib",
-			"wikipedia" : "wikipedia"
+			"wikipedia" : "wikipedia",
+			"SPARQLWrapper" : "SPARQLWrapper"
 		}
 
 		#Imports  which needs dl and tar gz

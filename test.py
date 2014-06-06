@@ -1,7 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from classes.semanticMatrix import SMa
+from SPARQLWrapper import SPARQLWrapper, JSON
 
-sma = SMa(prevent = True)
-sma.lemma = {"125" : "Cicero", "984" : "Vergilius"}
-sma.dbpedia()
+sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+name = "Lucius Fundanius Lamia Aelianus"
+sparql.setQuery("""
+	PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+	SELECT ?url WHERE {
+	  ?url a ?type;
+	     foaf:name '""" + name + """'@en .
+	} LIMIT 1
+	""")
+sparql.setReturnFormat(JSON)
+results = sparql.query().convert()
+
+if len(results["results"]["bindings"]) == 1:
+	print results["results"]["bindings"][0]["url"]["value"]
+else:
+	print false

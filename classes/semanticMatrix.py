@@ -5,6 +5,7 @@ import rdflib
 import wikipedia
 from classes.cache import Cache
 from models.Term import Term
+from SPARQLWrapper import SPARQLWrapper, JSON
 
 class SMa(object):
 	def __init__(self, nodes = [], edges = [], terms = [], prevent = False):
@@ -25,6 +26,7 @@ class SMa(object):
 		self.rdf = rdflib.Graph()
 		self.cache = Cache()
 		self.semes= {}
+		self.dbpedia_url = "http://dbpedia.org/resource/"
 
 		if prevent == False:
 			temp_nodes = nodes
@@ -41,22 +43,41 @@ class SMa(object):
 				else:
 					self.terms[node[0]] = node[1]
 
+	def sparql(self, name):
+
+		sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+		sparql.setQuery("""
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT ?url WHERE {
+			  ?url a ?type;
+			     foaf:name '""" + name + """'@en .
+			} LIMIT 1
+			""")
+		sparql.setReturnFormat(JSON)
+		results = sparql.query().convert()
+
+		if len(results["results"]["bindings"]) == 1:
+			return results["results"]["bindings"][0]["url"]["value"]
+		else:
+			return False
+
 	def load(self, url):
-		print "HELLOOO"
 		f = self.cache.rdf(url, check = True)
 		if f == False:
 			statusCode = 0
-			while statusCode != self.r.codes.ok:
-				print statusCode
-				print url
+			tentative = 0
+			while statusCode != self.r.codes.ok and tentative <= 5:
 				try:
 					r = self.r.get(url, headers = {
 						"accept" : 'application/rdf+xml,text/rdf+n3;q=0.9,application/xhtml+xml'
-					}, timeout = 1)
+					}, timeout = 5)
 					statusCode = r.status_code
 				except:
 					statusCode = 0
-			self.cache.rdf(url, data = r)
+					tentative += 1
+
+				self.cache.rdf(url, data = r)
+				self.rdf.load(self.cache.rdf(url, check = True))
 		else:
 			self.rdf.load(f)
 
@@ -67,13 +88,16 @@ class SMa(object):
 		"""
 		l = {}
 
+		self.rdf = rdflib.Graph()
 		self.load(url)
 		if len(self.rdf) == 0:
 			results = wikipedia.search(url.split("/")[-1])
 			if len(results) > 0:
-				input = results[0]
-				print input
-				l = lookup(input)
+				input = results[0] # -> Page Name
+				url = self.sparql(input)
+				if url == False:
+					return {}
+				l = self.lookup(url)
 				return l
 		else:
 			#Checking rediret
@@ -104,7 +128,7 @@ class SMa(object):
 			l = self.lemma[lem]
 			c = False
 			print "Looking for " + l
-			url = "http://dbpedia.org/resource/" + l
+			url = self.dbpedia_url + l
 			#Checking if exist
 			c = self.cache.dbpedia(url)
 			if c == False:
