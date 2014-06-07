@@ -38,6 +38,9 @@ class Initiate(object):
 		if os.path.exists("./cache/mysql") == False:
 			os.mkdir("./cache/mysql")
 
+		if os.path.exists("./cache/description") == False:
+			os.mkdir("./cache/description")
+
 		if os.path.exists("./data/gephi") == False:
 			os.mkdir("./data/gephi")
 

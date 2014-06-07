@@ -43,7 +43,8 @@ class Setup(object):
 		self.apt = {
 			"numpy" : "build-essential python-dev python-numpy python-scipy python-matplotlib libatlas-dev libatlas3-base python-setuptools",
 			"scipy" : "build-essential python-dev python-numpy python-scipy python-matplotlib libatlas-dev libatlas3-base python-setuptools",
-			"MySQLdb" : "python-mysqldb"
+			"MySQLdb" : "python-mysqldb",
+			"pylab" : "python-matplotlib"
 		}
 
 		#Imports which needs pip

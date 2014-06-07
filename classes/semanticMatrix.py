@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import pylab
 import rdflib
 import wikipedia
 from pprint import pprint
@@ -8,6 +9,15 @@ from classes.cache import Cache
 from models.Term import Term
 from SPARQLWrapper import SPARQLWrapper, JSON
 from math import log
+import numpy
+import nltk
+import scipy.cluster.hierarchy as hier
+import scipy.spatial.distance as dist
+
+from  nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+import string
+
 
 class SMa(object):
 	def __init__(self, nodes = [], edges = [], terms = [], prevent = False):
@@ -44,6 +54,28 @@ class SMa(object):
 					self.lemma[node[0]] = node[1]
 				else:
 					self.terms[node[0]] = node[1]
+
+	def definition(self, url):
+		sparql = SPARQLWrapper("http://dbpedia.org/sparql")
+
+		punctuation = (';', ':', ',', '.', '!', '?', '(', ')', '-', "'", '"')
+		sparql.setQuery("""SELECT str(?desc) 
+					where {
+					  <"""+url+"""> <http://www.w3.org/2000/01/rdf-schema#comment> ?desc
+					  FILTER (langMatches(lang(?desc),"en"))
+					} LIMIT 1""")
+		sparql.setReturnFormat(JSON)
+		results = sparql.query().convert()
+		stopword = stopwords.words("english")
+
+		if len(results["head"]["vars"]) > 0:
+			var = results["head"]["vars"][0]
+			if len(results["results"]["bindings"]) == 1:
+				return [w for w in word_tokenize(results["results"]["bindings"][0][var]["value"]) if w not in stopword and w not in punctuation]
+			else:
+				return []
+		else:
+			return []
 
 	def sparql(self, name):
 
@@ -91,6 +123,7 @@ class SMa(object):
 		l = {}
 
 		self.rdf = rdflib.Graph()
+		self.currentUrl = url
 		self.load(url)
 		if len(self.rdf) == 0:
 			results = wikipedia.search(url.split("/")[-1])
@@ -99,6 +132,7 @@ class SMa(object):
 				url = self.sparql(input)
 				if url == False:
 					return {}
+				self.currentUrl = url
 				l = self.lookup(url)
 				return l
 		else:
@@ -121,6 +155,7 @@ class SMa(object):
 				if pp not in l:
 					l[pp] = []
 				if pp == "http://dbpedia.org/ontology/wikiPageRedirects" and oo != url:
+					self.currentUrl = oo
 					return self.lookup(oo)
 				l[pp].append(oo)
 			return l
@@ -131,6 +166,7 @@ class SMa(object):
 			c = False
 			print "Looking for " + l
 			url = self.dbpedia_url + l
+			self.currentUrl = url
 			#Checking if exist
 			c = self.cache.dbpedia(url)
 			if c == False:
@@ -139,7 +175,15 @@ class SMa(object):
 			else:
 				l = c
 
+			d = self.cache.definition(self.currentUrl)
+			if d == False:
+				d = self.definition(self.currentUrl)
+				self.cache.definition(self.currentUrl, d)
+			else:
+				d = d
+
 			self.semes[self.lemma[lem]] = Term(l)
+			self.semes[self.lemma[lem]].definition(d)
 
 	def documents(self):
 		"""	Returns a list of document given nodes and edges so we can perform tf-idf 
@@ -208,7 +252,6 @@ class SMa(object):
 		#TF = frequency in first list / max frequency available in document
 		for term_matrix in self.matrix:
 			term_tfidf_matrix = [0]*len(term_matrix)
-			print max (term_matrix)
 			maxTF = float(max(term_matrix))
 			i = 0
 			for term in term_matrix:
@@ -219,7 +262,48 @@ class SMa(object):
 			tfidf_matrix.append(term_tfidf_matrix)
 
 		self.tfidf_matrix = tfidf_matrix
-		print tfidf_matrix
+
+		self.vectors = [numpy.array(f) for f in tfidf_matrix]
+
+		U,s,V = numpy.linalg.svd(self.vectors) # svd decomposition of A
+		print "Vectors created", len(self.vectors[0]), "after SVD decomposition", len(U)
+
+		# print "First 50 words are", unique_terms[:20]
+		for fileindex in U:
+			print "First 10 stats for this document are:", fileindex[0:10]
+
+		clusterer = nltk.cluster.GAAClusterer(num_clusters=3)
+		clusters = clusterer.cluster(self.vectors, True)
+
+		print "clusterer: ", clusterer
+		print "clustered: ", self.vectors
+		print "As: ", clusters
+		# print "Means: ", clusterer.means()
+		labels = [self.terms[t] for t in self.terms if self.terms[t] != False]
+		clusterer.dendrogram().show(leaf_labels = labels )
+
+
+		#Using a distance matrix
+		distMatrix = dist.pdist(self.tfidf_matrix)
+		distSquareMatrix = dist.squareform(distMatrix)
+		print '\ndistance matrix:'
+		print distSquareMatrix
+
+		#calculate the linkage matrix
+		fig = pylab.figure(figsize=(10,10))
+		linkageMatrix = hier.linkage(distSquareMatrix, method = 'ward')
+		dendro = hier.dendrogram(linkageMatrix,orientation='left', labels=labels)
+		fig.savefig('dendrogram.png')
+		print dendro
+
+		#Using KMEANS
+		clusterer = nltk.cluster.KMeansClusterer(3, nltk.cluster.euclidean_distance, repeats=10, avoid_empty_clusters=True)
+		print '\nK-means results using NLTK:'
+		answer = clusterer.cluster(self.vectors, True)
+		
+		print('Clustered:', self.vectors)
+		print('As:', answer)
+		print('Means:', clusterer.means())
 
 	def pprint(self):
 		print self.semes

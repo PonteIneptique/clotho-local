@@ -14,7 +14,8 @@ class Cache(object):
 			"search" : "./cache/search/",
 			"form" : "./cache/form/",
 			"dbpedia" : "./cache/dbpedia/",
-			"rdf" : "./cache/rdf/"
+			"rdf" : "./cache/rdf/",
+			"definition" : "./cache/definition/"
 		}
 	def tUoB(self, obj, encoding='utf-8'):
 		if isinstance(obj, basestring):
@@ -90,6 +91,9 @@ class Cache(object):
 
 	def form(self, word, data = False, check = False):
 		return self.cache(word, "form", data, check)
+
+	def definition(self, url, data = False, check = False):
+		return self.cache(url, "definition", data, check)
 
 	def sentence(self, sentence, data = False, check = False):
 		"""	Return a boolean given the functionnality asked: can either check if cache is available, retrieve or write cache
