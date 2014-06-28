@@ -9,6 +9,7 @@ try:
 except:
 	print "MySQL Class not available"
 	sys.exit()
+	
 
 class Results(object):
 	def __init__(self, cache = False, web = False):
@@ -46,14 +47,14 @@ class Results(object):
 		else:
 			with self.con:
 				cur = self.con.cursor()
-				cur.execute("SELECT id_form  FROM form WHERE text_form = '" + form + "'")
+				cur.execute("SELECT id_form  FROM form WHERE text_form = %s",[form])
 				d = cur.fetchone()
 
 				if d != None:
 					if len(d) == 1:
 						return d[0]
 				else:
-					cur.execute("INSERT INTO form (text_form) VALUES ('" + form + "')")
+					cur.execute("INSERT INTO form (text_form) VALUES (%s)", [form])
 					r = self.con.insert_id()
 					self.saved["form"][form] = r
 					return r

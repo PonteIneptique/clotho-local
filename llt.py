@@ -89,95 +89,47 @@ if s.check() == False:
 	s.create()
 	q.deco()
 
-goQuery = raw_input("Do you want to make a new query ? y/n \n - ")
+filename = raw_input("Path to the file? \n ->")
+with codecs.open(filename, "r", "utf-8") as f:
+	source = json.load(f)
+	print "opened"
+	f.close()
 
-if goQuery.lower() == "y":
-	q.config()
-	q.lemmas()
-	#Save
-	q.save()
+q.q["name"] = filename
+q.q["mode"] = raw_input("Mode (Lemma, Entities)? \n ->")
+for data in source:
+	q.q["terms"].append(data)
 
-else:
-	q.load()
-
-q.deco()
-
+print q.q
 saved = False
 if q.process():
-	mode = q.databaseMode(modes)
 	#PROCESS
 	terms =  {}
 	"""
-		terms = {
-			term = [
+		terms : {
+			term : [
 				[form, lemma, text, sentence]
 			]
 		}
 	"""
-	widget = ['Processing ocurrence n°', Counter(), ' ( ', Timer(), ' ) ']
-	pbar = False
 	terms = {}
 	for term in q.q["terms"]:
-
-		#We get the morph
-		morphs = m.all(term)
-
-		"""
-		if len(morphs) == 0:
-			newmorphs = q.newmorphs(term)
-			if len(newmorphs) > 0:
-				m.save(newmorphs)
-		"""
-				
-		if mode == "mysql":
-			occ, l = s.occurencies(term)
-		elif mode == "lucene":
-			occ, l = luc.occurencies(term, morphs)
-
-		if pbar != False:
-			pbar.finish()
-		pbar = ProgressBar(widgets=widget, maxval=l).start()
-		progress = 0
-
+		print term
 		terms[term] = []
+		sentences = [item for item in source[term] if "text" in item and len(item["text"]) > 2]
+		#For each sentence, we now update terms
+		for item in sentences:
+			sentence = item["text"]
+			lemma = c.sentence(sentence)
 
+			if lemma == False:
+				lemma = t.lemmatize(sentence, mode = q.q["mode"], terms = q.q["terms"])
+				c.sentence(sentence, data = lemma)
+				
+			lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"].lower(), stopwords = t.stopwords)
 
-		if l > 0:
-			for o in occ:
-				#Just Viz stuff
-				progress += 1
-				pbar.update(progress)
-
-				#Getting the chunk
-				if mode == "mysql":
-					d, l = s.chunk(o)
-				elif mode == "lucene":
-					d, l = luc.chunk(o)
-
-				#Reading chunk
-				section = t.chunk(d, mode = mode)
-				#Now search for our term
-				sentences = t.find(section, morphs)
-				#For each sentence, we now update terms
-				for sentence in sentences:
-					"""
-					print type(sentence)
-					print sentence
-					print type(sentence)
-					#sentence = sentence.encode("UTF-8")
-					"""
-					lemma = c.sentence(sentence)
-
-					if lemma == False:
-						lemma = t.lemmatize(sentence, mode = q.q["mode"], terms = q.q["terms"])
-						c.sentence(sentence, data = lemma)
-						
-					lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"], stopwords = t.stopwords)
-
-					for lem in lemma:
-						terms[term].append([lem[0], lem[1], d, sentence])
-
-	pbar.finish()
+			for lem in lemma:
+				terms[term].append([lem[0], lem[1], item["author"], item["text"]])
 
 	#Caching results
 	if c.search(q.q, data = terms) == False:
@@ -200,19 +152,21 @@ else:
 	if jsonExists:
 		terms = c.search(q.q)
 		exportOnGoing = True
-		r.clean()
-		print "Saving"
-		for term in terms:
-			r.save(terms[term])
+		
+		if not c.nodes(q.q, check = True):
+			r.clean()
+			print "Saving"
+			for term in terms:
+				r.save(terms[term])
 	else:
 		print "Cache doesnt exist. Unable to load any data for export"
 
 
 
 if exportOnGoing == True:
+	e = Export(q.q)
+	e.nodification()
 	while q.exportResults():
-		e = Export()
-		e.nodification()
 		print "Nodification done"
 
 		exportMean = q.exportMean()
@@ -222,11 +176,13 @@ if exportOnGoing == True:
 			if q.cleanProbability():
 				e.cleanProbability();
 
-			if exportMean != "semantic-matrix":
+			if exportMean  not in ["semantic-matrix", "tfidf-distance", "semantic-gephi"]:
 				gephiMode = "sentence"
 				if q.exportLinkType() == "lemma":
 					gephiMode = "lemma"
 					e.lemma(terms = q.q["terms"])
+			else:
+				e.lemma(terms = q.q["terms"])
 			
 		if exportMean == "gephi":
 			e.gephi(gephiMode)
@@ -252,5 +208,11 @@ if exportOnGoing == True:
 
 		elif exportMean == "semantic-matrix":
 			# It is needed for Export.semanticMatrix() to have lemma-lemma links """
-			e.lemma(terms = q.q["terms"])
 			e.semanticMatrix(terms = q.q["terms"])
+
+		elif exportMean == "tfidf-distance":
+			# It is needed for Export.semanticMatrix() to have lemma-lemma links """
+			e.tfidfDistance(terms = q.q["terms"])
+
+		elif exportMean == "semantic-gephi":
+			e.semanticGephi(terms = q.q["terms"])

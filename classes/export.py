@@ -13,9 +13,15 @@ except:
 	print "Error importing MYSQL tool"
 	#sys.exit()
 	
+try:
+	import classes.cache as cache
+except:
+	print "Error importing Cache tool"
 
 class Export(object):
-	def __init__(self):
+	def __init__(self, q = False):
+		self.q = q
+		self.c = cache.Cache()
 		self.perseus = SQL.SQL()
 		self.results = SQL.SQL(cache = True, web = False)
 		self.cache = {"lemma" : {}, "sentence" : {}, "form": {}}
@@ -32,6 +38,14 @@ class Export(object):
 	def nodification(self):
 		"""	Using SQL, retrieve the nodes and links so everything works with export
 		"""
+
+		if self.q and self.c.nodes(self.q, False, True):
+			d = self.c.nodes(self.q)
+			self.nodes = d["nodes"]
+			self.edges = d["edges"]
+			self.triples = d["triples"]
+			return True
+
 		nodes = [] # [id, label, type, document_id]
 		edges = []
 		triples = [] # lemma, form, sentence
@@ -85,6 +99,10 @@ class Export(object):
 		self.edges = edges
 		self.triples = triples
 		self.orphans = orphans
+
+		if self.q:
+			self.c.nodes(self.q, data = {"nodes" : nodes, "edges" : edges, "triples" : triples})
+
 
 	def useTT(self):
 		""" Use TreeTagger to improve the probability feature, creating a new dictionnary where the key is the sentence and the value is a list of found lemma
@@ -172,6 +190,15 @@ class Export(object):
 		Keyword arguments
 		terms --- List of query terms (lemma people are looking form)
 		"""
+
+
+		"""
+		if self.q and self.c.triples(self.q, False, True):
+			d = self.c.nodes(self.q)
+			self.nodes = d["nodes"]
+			self.edges = d["edges"]
+			return True
+		"""
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
 		hashes = [self.hash(edge[0:2]) for edge in self.edges if edge[2] == "lemma-form"]
 		done = []
@@ -197,6 +224,9 @@ class Export(object):
 
 		self.weight(terms = terms)
 
+		if self.q:
+			self.c.triples(self.q, {"nodes" : self.nodes, "edges" : self.edges})
+
 
 	def weight(self, nodes = False, edges = False, terms = []):
 		if nodes == False:
@@ -213,25 +243,32 @@ class Export(object):
 
 		self.nodes = n
 
-	def gephi(self, mode="sentence"):
+	def gephi(self, mode="sentence", nodes = [], edges = [], labels = []):
 		separator = "\t"
+		if nodes == []:
+			nodes = self.nodes
+		if edges == []:
+			edges = self.edges
 		if mode == "lemma":
 			nodesColumn = ["id", "label", "weight"]
 			edgesColumn = ["target", "source", "sentence"]
 			#self.weight()
+		elif mode == "semantic":
+			nodesColumn = labels
+			edgesColumn = ["target", "source", "sentence"]
 		else:
 			nodesColumn = ["id", "label", "type", "document"]
 			edgesColumn = ["target", "source", "type"]
 
 		f = codecs.open("./data/gephi/nodes.csv", "wt")
 		f.write(separator.join(nodesColumn)+"\n")
-		for node in self.nodes:
+		for node in nodes:
 			f.write(separator.join([str(n).replace("\\n", " ").replace("\t", " ") for n in node])+"\n")
 		f.close()
 
 		f = codecs.open("./data/gephi/edges.csv", "wt")
 		f.write(separator.join(edgesColumn)+"\n")
-		for edge in self.edges:
+		for edge in edges:
 			f.write(separator.join([str(e) for e in edge])+"\n")
 		f.close()
 
@@ -356,4 +393,31 @@ class Export(object):
 		sm.dbpedia()
 		sm.documents()
 		sm.matrixify()
+		sm.stats()
 		sm.tfidf()
+
+	def tfidfDistance(self, terms = [], query = []):
+		""" TF-IDF for all lemma """
+		try:
+			from classes.tfidf import TFIDF
+		except:
+			print "Unable to load Semantic Matrix Class"
+			sys.exit()
+
+		sm = TFIDF(nodes = self.nodes, edges = self.edges, terms = terms)
+		sm.matrixify()
+		sm.stats()
+		sm.tfidf()
+
+	def semanticGephi(self, terms = []):
+		try:
+			from classes.semanticMatrix import SMa
+		except:
+			print "Unable to load Semantic Matrix Class"
+			sys.exit()
+		sm = SMa(nodes = self.nodes, edges = self.edges, terms = terms)
+		sm.dbpedia(definition = False)
+		sm.gephi()
+		self.gephi(mode = "semantic", nodes = sm.nodes, edges = sm.edges, labels = sm.labels)
+
+		

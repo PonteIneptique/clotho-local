@@ -15,7 +15,9 @@ class Cache(object):
 			"form" : "./cache/form/",
 			"dbpedia" : "./cache/dbpedia/",
 			"rdf" : "./cache/rdf/",
-			"definition" : "./cache/definition/"
+			"definition" : "./cache/definition/",
+			"triples" : "./cache/triples/",
+			"nodes" : "./cache/nodes/"
 		}
 	def tUoB(self, obj, encoding='utf-8'):
 		if isinstance(obj, basestring):
@@ -30,7 +32,7 @@ class Cache(object):
 		sentence --- A string by default in mode sentence or a dictionary in mode search
 		mode --- Type of hash to retrieve (default = sentence)
 		"""
-		if mode == "search":
+		if mode in ["search", "nodes", "triples"]:
 			sentence = " ".join([term for term in sentence["terms"]]) + " " + sentence["name"] + " " + sentence["mode"]
 
 		sentence = hashlib.md5(sentence.encode("utf-8")).hexdigest()
@@ -82,6 +84,12 @@ class Cache(object):
 					d = f.write(json.dumps(data))
 				f.close()
 			return True	
+
+	def triples(self, url, data = False, check = False):
+		return self.cache(url, "triples", data, check)
+
+	def nodes(self, query, data = False, check = False):
+		return self.cache(query, "nodes", data, check)
 
 	def rdf(self, url, data = False, check = False):
 		return self.cache(url, "rdf", data, check)

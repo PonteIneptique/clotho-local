@@ -24,6 +24,25 @@ class Query(object):
 	def deco(self):
 		print "\n*******************************************************\n"
 
+	def yn(self, question):
+		""" Return a raw input and check it
+
+		Keywords Arguments
+		question --- Question to be printed
+		"""
+		answer = raw_input(question + "\n y/n ->\t").lower()
+		if answer in ["y", "n"]:
+			return answer
+		else:
+			return self.yn("Input not recognized")
+
+	def number(self, question, options = False, intOnly = False):
+		answer = raw_input(question)
+		"""if intOnly:
+			if answer.
+		if answer.isdigit() and answer :"""
+		return True
+
 	def welcome(self):
 		self.deco()
 		print "\t\tWelcome to Clotho"
@@ -35,7 +54,7 @@ class Query(object):
 			print "Unrecognized input"
 		else:
 			print "Choose your threshold"
-		self.q["threshold"] = raw_input("Format your threshold like beginning-end  : \n y/n - ")
+		self.q["threshold"] = self.yn("Format your threshold like beginning-end  : \n y/n - ")
 		#Checking
 
 	def config(self):
@@ -47,13 +66,9 @@ class Query(object):
 		self.q["mode"] = raw_input("Available : Entities | Lemma | Entities,Lemma : \n - ")
 		print "You choosed " + self.q["mode"]
 
-		self.q["threshold"] = raw_input("Do you want to apply a date threshold  : \n y/n - ").lower()
-		if self.q["threshold"] == "y":
-			print "Choose your threshold"
-			self.q["threshold"] = raw_input("Format your threshold like beginning-end  : \n y/n - ")
-		else:
-			self.q["threshold"] = "n"
-		print "You choosed " + self.q["mode"]
+		self.q["threshold"] = self.yn("Do you want to apply a date threshold ?")
+
+		print "You choosed " + self.q["threshold"]
 
 	def lemmas(self):
 
@@ -81,14 +96,11 @@ class Query(object):
 		return self.addLemma()
 
 	def addLemma(self):
-		q = raw_input("Do you want to add another lemma ? y/n \n - ").lower()
+		q = self.yn("Do you want to add another lemma ?")
 		if q == "y":
 			return self.lemmas()
 		elif q == "n":
 			return True
-		else:
-			self.inputError(q)
-			return self.addLemma()
 
 
 	def load(self):
@@ -118,84 +130,66 @@ class Query(object):
 	def save(self, deco = True):
 		if deco:
 			self.deco()
-		s = raw_input("Do you want to save your request ? y/n \n - ").lower()
+		s = self.yn("Do you want to save your request ?")
 		if s == "y":
 			if(self.sql.save(self.q)):
 				print "Request saved"
 			else:
 				print "Error during save"
-		elif s == "n":
-			print "Request won't be saved"
 		else:
-			self.inputError(s)
-			self.save(deco = False)
+			print "Request won't be saved"
 
 	def saveResults(self, deco = True):
 		if deco:
 			self.deco()
-		s = raw_input("Do you want to save your results ? y/n \n - ").lower()
+		s = self.yn("Do you want to save your results ?")
 		if s == "y":
 			return True
-		elif s == "n":
-			return False
 		else:
-			self.inputError(s)
-			return self.saveResults()
+			return False
 
 	def exportResults(self):
 		self.deco()
 
-		s = raw_input("Do you want to export your query ? y/n \n - ").lower()
+		s = self.yn("Do you want to export your query ?")
 		if s == "y":
 			return True
-		elif s == "n":
-			return False
 		else:
-			self.inputError(s)
-			return self.exportResults(deco = False)
+			return False
 
 	def process(self, deco = True):
 		if deco:
 			self.deco()
 
-		s = raw_input("Do you want to process this query ? y/n \n - ").lower()
+		s = self.yn("Do you want to process this query ?")
 		if s == "y":
 			return True
-		elif s == "n":
-			return False
 		else:
-			self.inputError(s)
-			return self.process(deco = False)
+			return False
 
 	def alreadySaved(self, deco = True):
 		if deco:
 			self.deco()
 
-		s = raw_input("Is this query the last one you launched and saved ? y/n \n - ").lower()
+		s = self.yn("Is this query the last one you launched and saved ?")
 		if s == "y":
 			return True
-		elif s == "n":
-			return False
 		else:
-			self.inputError(s)
-			return self.alreadySaved(deco = False)
+			return False
 
 	def exportLinkType(self, deco = True):
 		if deco:
 			self.deco()
 
-		s = raw_input("Do you want to replace lemma/form/Sentence links to lemma/lemma links ? y/n \n - ").lower()
+		s = self.yn("Do you want to replace lemma/form/Sentence links to lemma/lemma links ?")
 		if s == "y":
 			return "lemma"
-		elif s == "n":
-			return "sentence"
 		else:
-			self.inputError(s)
-			return self.exportLinkType(deco = False)
+			return "sentence"
 
 
 	def exportMean(self, deco = True):
-		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix"]
+		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix", "tfidf-distance", "semantic-gephi"]
 		if deco:
 			self.deco()
 
@@ -218,41 +212,32 @@ class Query(object):
 		if deco:
 			self.deco()
 
-		s = raw_input("Clean based on probability ? y/n \n - ").lower()
+		s = self.yn("Clean based on probability ?")
 		if s == "y":
 			return "lemma"
-		elif s == "n":
-			return "sentence"
 		else:
-			self.inputError(s)
-			return self.cleanProbability(deco = False)
+			return "sentence"
 
 
 	def thresholdOne(self, deco = True):
 		if deco:
 			self.deco()
 
-		s = raw_input("Do you want to clean item with a frequency of 1 ? y/n \n - ").lower()
+		s = self.yn("Do you want to clean item with a frequency of 1 ?")
 		if s == "y":
 			return True
-		elif s == "n":
-			return False
 		else:
-			self.inputError(s)
-			return self.thresholdOne(deco = False)
+			return False
 
 	def clustering(self, deco = True):
 		if deco:
 			self.deco()
 
-		s = raw_input("Do you want to cluster items ? y/n \n - ").lower()
+		s = self.yn("Do you want to cluster items ?")
 		if s == "y":
 			return True
-		elif s == "n":
-			return False
 		else:
-			self.inputError(s)
-			return self.clustering(deco = False)
+			return False
 
 	def databaseMode(self, modes, deco = True):
 		if len(modes) == 1:

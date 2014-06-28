@@ -75,7 +75,11 @@ class Morph(object):
 			if isinstance(responseBody, list):
 				ret = []
 				for item in responseBody:
-					ret.append(item[ u'rest'][u'entry'][u'dict'][u'hdwd'][u'$'].translate({ord(c): None for c in digits}))
+					try:
+						ret.append(item[ u'rest'][u'entry'][u'dict'][u'hdwd'][u'$'].translate({ord(c): None for c in digits}))
+					except:
+						print item
+						continue
 				return ret
 			else:
 				try:

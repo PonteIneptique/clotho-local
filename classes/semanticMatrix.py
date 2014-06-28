@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import operator
 import pylab
 import rdflib
 import wikipedia
@@ -13,6 +14,7 @@ import numpy
 import nltk
 import scipy.cluster.hierarchy as hier
 import scipy.spatial.distance as dist
+import re
 
 from  nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
@@ -54,7 +56,12 @@ class SMa(object):
 					self.lemma[node[0]] = node[1]
 				else:
 					self.terms[node[0]] = node[1]
-
+	def addslashes(self, s):
+		l = ["\\", '"', "'", "\0", ]
+		for i in l:
+			if i in s:
+				s = s.replace(i, '\\'+i)
+		return s
 	def definition(self, url):
 		sparql = SPARQLWrapper("http://dbpedia.org/sparql")
 
@@ -84,7 +91,7 @@ class SMa(object):
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?url WHERE {
 			  ?url a ?type;
-			     foaf:name '""" + name + """'@en .
+			     foaf:name '""" + self.addslashes(name) + """'@en .
 			} LIMIT 1
 			""")
 		sparql.setReturnFormat(JSON)
@@ -136,12 +143,6 @@ class SMa(object):
 				l = self.lookup(url)
 				return l
 		else:
-			#Checking rediret
-			"""
-			redirect = self.rdf.triples( (url, "http://dbpedia.org/ontology/wikiPageRedirects", None) ).toPython()
-			if len(redirect) > 0:
-				print redirect
-			"""
 
 			for s,p,o in self.rdf:
 				"""We construct a json whith the following structure :
@@ -160,11 +161,11 @@ class SMa(object):
 				l[pp].append(oo)
 			return l
 
-	def dbpedia(self):
+	def dbpedia(self, definition = True):
 		for lem in self.lemma:
 			l = self.lemma[lem]
 			c = False
-			print "Looking for " + l
+			#print "Looking for " + l
 			url = self.dbpedia_url + l
 			self.currentUrl = url
 			#Checking if exist
@@ -183,7 +184,9 @@ class SMa(object):
 				d = d
 
 			self.semes[self.lemma[lem]] = Term(l)
-			self.semes[self.lemma[lem]].definition(d)
+
+			if definition == True:
+				self.semes[self.lemma[lem]].definition(d)
 
 	def documents(self):
 		"""	Returns a list of document given nodes and edges so we can perform tf-idf 
@@ -213,11 +216,99 @@ class SMa(object):
 		self.reversedProperties = reversedProperties
 		return True
 
+	def cleanProperty(self, prop):
+		r = re.compile("([A-Za-z]+)[0-9]+")
+		p = r.match(prop)
+		if p:
+			return p.group(1)
+		else:
+			return prop
+
+	def gephi(self, liste = True):
+		""" Get the gephi representation of the matrix
+		"""
+		self.nodes = {}
+		self.csvIndex = {"id": 0, "label" : 1, "type" : 2}
+		indexes = ["id", "label", "type"]
+
+
+		for term in self.terms:
+			if self.terms[term] == "lascivus":
+				self.nodes[term] = {"label" : self.terms[term], "id" : term, "type" : "term"}
+		edges = self.edges
+		self.edges = [edge for edge in self.edges if edge[0] != edge[1] and edge[0] in self.nodes]
+		for e in [edge for edge in edges if edge[0] != edge[1] and edge[1] in self.nodes]:
+			self.edges += [e[1], e[0]]
+
+		for lemma in self.lemma:
+
+			self.nodes[lemma] = self.semes[self.lemma[lemma]].graph
+			self.nodes[lemma]["label"] = self.lemma[lemma]
+			self.nodes[lemma]["id"] = lemma
+			self.nodes[lemma]["type"] = "entity"
+
+		#Now we have the whole set of nodes
+		#We need to extract all information so it would feet into a CSV...
+		i = 3
+		if liste:
+			for node in self.nodes:
+				for prop in self.nodes[node]:
+					if prop not in indexes:
+						if prop not in self.csvIndex:
+							self.csvIndex[prop] = i
+							i += 1
+
+			nodes = []
+			for node in self.nodes:
+				n = [0] * len(self.csvIndex)
+				for prop in self.nodes[node]:
+					if isinstance(self.nodes[node][prop], list):
+
+						n[self.csvIndex[prop]] = ",".join([self.cleanProperty(elem) for elem in self.nodes[node][prop]])
+					else:
+						n[self.csvIndex[prop]] = self.nodes[node][prop]
+				nodes.append(n)
+
+			labels = sorted(self.csvIndex.iteritems(), key=operator.itemgetter(1))
+			self.labels = [label[0] for label in labels]
+		else: #Returns properties as nodes
+			for node in self.nodes:
+				for prop in self.nodes[node]:
+					if prop not in indexes:
+						for elem in self.nodes[node][prop]:
+							el = self.cleanProperty(elem)
+							if el not in self.csvIndex:
+								self.csvIndex[el] = i
+								i += 1
+
+			nodes = []
+			for node in self.nodes:
+				n = [0] * len(indexes)
+				for prop in self.nodes[node]:
+					if isinstance(self.nodes[node][prop], list):
+						for elem in self.nodes[node][prop]:
+							el = self.cleanProperty(elem)
+							self.edges.append([node, self.csvIndex[el], 1])
+					else:
+						n[self.csvIndex[prop]] = self.nodes[node][prop]
+				nodes.append(n)
+
+
+			for element in self.csvIndex:
+				if element not in indexes:
+					el = self.cleanProperty(elem)
+					nodes.append([self.csvIndex[el], el, "property"])
+
+			self.labels = indexes
+		self.nodes = nodes
+
 	def matrixify(self):
 		m = []
+		ms = []
 		#We get all terms
 		for term in self.terms:
 			t = []
+			ts = []
 			#We get all linked lemma
 			for edge in [e for e in self.edges if term in e]:
 				if edge[0] == term:
@@ -227,16 +318,19 @@ class SMa(object):
 				if otherEdge not in self.terms:
 					#Now we get the document informations
 					t += self.document[self.lemma[otherEdge]]
+					ts += [1]
 			#Just a temp check
 			#t = [self.reversedProperties[prop] for prop in t]
 			#End temp check
 			if len(t) > 0:
 				m.append(t)
+				ms.append(ts)
 			else:
 				self.terms[term] = False
 
 		#Now we have a matrix with ids of item, now let make a real matrix
 		matrix = []
+		self.prematrix = ms
 		for mm in m:
 			t = [0]*len(self.properties) #We fill the matrix
 			for e in mm:
@@ -246,6 +340,12 @@ class SMa(object):
 		self.matrix = matrix
 		return self.matrix
 
+
+	def stats(self):
+		labels = [self.terms[t] for t in self.terms if self.terms[t] != False]
+		sums = [sum([1 for p in m if p > 1]) for m in self.prematrix]
+		for i, s in enumerate(sums):
+			print labels[i] + "\t" + str(s)
 
 	def tfidf(self):
 		tfidf_matrix = []
@@ -268,42 +368,27 @@ class SMa(object):
 		U,s,V = numpy.linalg.svd(self.vectors) # svd decomposition of A
 		print "Vectors created", len(self.vectors[0]), "after SVD decomposition", len(U)
 
-		# print "First 50 words are", unique_terms[:20]
-		for fileindex in U:
-			print "First 10 stats for this document are:", fileindex[0:10]
+		#clusterer = nltk.cluster.GAAClusterer(num_clusters=3)
+		#clusters = clusterer.cluster(self.vectors, True)
 
-		clusterer = nltk.cluster.GAAClusterer(num_clusters=3)
-		clusters = clusterer.cluster(self.vectors, True)
-
-		print "clusterer: ", clusterer
-		print "clustered: ", self.vectors
-		print "As: ", clusters
 		# print "Means: ", clusterer.means()
 		labels = [self.terms[t] for t in self.terms if self.terms[t] != False]
-		clusterer.dendrogram().show(leaf_labels = labels )
+		#clusterer.dendrogram().show(leaf_labels = labels )
 
 
 		#Using a distance matrix
 		distMatrix = dist.pdist(self.tfidf_matrix)
 		distSquareMatrix = dist.squareform(distMatrix)
-		print '\ndistance matrix:'
-		print distSquareMatrix
 
 		#calculate the linkage matrix
 		fig = pylab.figure(figsize=(10,10))
 		linkageMatrix = hier.linkage(distSquareMatrix, method = 'ward')
 		dendro = hier.dendrogram(linkageMatrix,orientation='left', labels=labels)
 		fig.savefig('dendrogram.png')
-		print dendro
 
 		#Using KMEANS
 		clusterer = nltk.cluster.KMeansClusterer(3, nltk.cluster.euclidean_distance, repeats=10, avoid_empty_clusters=True)
-		print '\nK-means results using NLTK:'
 		answer = clusterer.cluster(self.vectors, True)
-		
-		print('Clustered:', self.vectors)
-		print('As:', answer)
-		print('Means:', clusterer.means())
 
 	def pprint(self):
 		print self.semes

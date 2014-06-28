@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-
+print "819810".isdigit()
+print int("819810")
+sys.exit()
 
 explanation = """
 	This file is here to provide a setup functionnality

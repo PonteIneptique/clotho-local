@@ -10,6 +10,9 @@ except:
 	print "MySQLdb not installed. \n apt-get install python-mysqldb"
 	sys.exit()
 
+import warnings
+warnings.filterwarnings("ignore", category = mdb.Warning)
+
 class SQL(object):
 	def __init__(self, results = False, cache = False, web = False):
 		try:

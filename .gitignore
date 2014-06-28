@@ -8,3 +8,5 @@ morph/latin.morph.xml
 applyMetadata.py
 *.tmp
 progressbar/*
+*.png
+*.json
