@@ -100,7 +100,6 @@ q.q["mode"] = raw_input("Mode (Lemma, Entities)? \n ->")
 for data in source:
 	q.q["terms"].append(data)
 
-print q.q
 saved = False
 if q.process():
 	#PROCESS

@@ -4,17 +4,24 @@
 import os
 import sys
 
+try:
+	if __name__ == "__main__":
+		from SQL import SQL
+	else:
+		from classes.SQL import SQ
+except:
+	sql_error = "Unable to load SQL dependecy"
+
 class Clotho(object):
 	def __init__(self, terms = [], query_terms = []):
+
 		try:
-			from classes.SQL import SQL
 			self.sql = SQL(web=True)
 			self.con = self.sql.con
-
 			self.origin = SQL()
-
 		except:
 			print "Unable to load SQL dependecy"
+
 		self.terms = terms
 		self.query_terms = query_terms
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}

@@ -233,8 +233,7 @@ class SMa(object):
 
 
 		for term in self.terms:
-			if self.terms[term] == "lascivus":
-				self.nodes[term] = {"label" : self.terms[term], "id" : term, "type" : "term"}
+			self.nodes[term] = {"label" : self.terms[term], "id" : term, "type" : "term"}
 		edges = self.edges
 		self.edges = [edge for edge in self.edges if edge[0] != edge[1] and edge[0] in self.nodes]
 		for e in [edge for edge in edges if edge[0] != edge[1] and edge[1] in self.nodes]:
