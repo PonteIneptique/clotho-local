@@ -50,6 +50,9 @@ class Initiate(object):
 		if os.path.exists("./data/MySQL") == False:
 			os.mkdir("./data/MySQL")
 
+		if os.path.exists("./data/corpus") == False:
+			os.mkdir("./data/corpus")
+
 		M = Morph()
 		if M.check() == False:
 			M.install()

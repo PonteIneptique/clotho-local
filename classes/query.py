@@ -19,6 +19,7 @@ class Query(object):
 		}
 		self.dateRegexp = re.compile("(-?[0-9]+|\?)\;(-?[0-9]+|\?)")
 		self.sql = SQL.SQL()
+		self.exportLemma = ["semantic-matrix", "tfidf-distance", "semantic-gephi"]
 
 
 	def deco(self):
@@ -189,7 +190,7 @@ class Query(object):
 
 
 	def exportMean(self, deco = True):
-		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix", "tfidf-distance", "semantic-gephi"]
+		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix", "tfidf-distance", "semantic-gephi", "corpus"]
 		if deco:
 			self.deco()
 

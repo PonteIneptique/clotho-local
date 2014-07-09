@@ -18,6 +18,10 @@ try:
 except:
 	print "Error importing Cache tool"
 
+try:
+	import classes.corpus as Corpus
+except:
+	print "Error importing corpus"
 class Export(object):
 	def __init__(self, q = False):
 		self.q = q
@@ -25,7 +29,6 @@ class Export(object):
 		self.perseus = SQL.SQL()
 		self.results = SQL.SQL(cache = True, web = False)
 		self.cache = {"lemma" : {}, "sentence" : {}, "form": {}}
-
 
 		###Load treetagger if possible
 		try:
@@ -420,4 +423,7 @@ class Export(object):
 		sm.gephi()
 		self.gephi(mode = "semantic", nodes = sm.nodes, edges = sm.edges, labels = sm.labels)
 
+	def corpus(self, data = {}):
+		""" Generation of plain-text corpus by term """
+		C = Corpus.Corpus(data)
 		

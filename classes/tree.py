@@ -12,4 +12,4 @@ class TT(object):
 		except:
 			print "Unable to load latin dependency of treetagger"
 
-t = TT()
+#t = TT()

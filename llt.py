@@ -175,7 +175,7 @@ if exportOnGoing == True:
 			if q.cleanProbability():
 				e.cleanProbability();
 
-			if exportMean  not in ["semantic-matrix", "tfidf-distance", "semantic-gephi"]:
+			if exportMean  not in q.exportLemma:
 				gephiMode = "sentence"
 				if q.exportLinkType() == "lemma":
 					gephiMode = "lemma"
@@ -215,3 +215,6 @@ if exportOnGoing == True:
 
 		elif exportMean == "semantic-gephi":
 			e.semanticGephi(terms = q.q["terms"])
+
+		elif exportMean == "corpus":
+			e.corpus(data = terms)
