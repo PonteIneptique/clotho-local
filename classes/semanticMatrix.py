@@ -1,24 +1,29 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
+#Python CORE
+import re
+import string
 import operator
+from math import log
+from pprint import pprint
+
+#Python Libraries
+import numpy
+import scipy.cluster.hierarchy as hier
+import scipy.spatial.distance as dist
+import nltk
+from  nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
 import pylab
 import rdflib
 import wikipedia
-from pprint import pprint
+from SPARQLWrapper import SPARQLWrapper, JSON
+
+#Shared class through Clotho
 from classes.cache import Cache
 from models.Term import Term
-from SPARQLWrapper import SPARQLWrapper, JSON
-from math import log
-import numpy
-import nltk
-import scipy.cluster.hierarchy as hier
-import scipy.spatial.distance as dist
-import re
-
-from  nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-import string
 
 
 class SMa(object):

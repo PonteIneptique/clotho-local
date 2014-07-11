@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+#Python CORE
 import sys
 import re
-try:
-	import classes.SQL as SQL
-except:
-	print "Error importing MYSQL tool"
-	sys.exit()
+
+#Shared class through Clotho
+from classes.SQL import SQL
 
 class Query(object):
 	
@@ -18,7 +17,7 @@ class Query(object):
 			"mode" : ""
 		}
 		self.dateRegexp = re.compile("(-?[0-9]+|\?)\;(-?[0-9]+|\?)")
-		self.sql = SQL.SQL()
+		self.sql =SQL()
 		self.exportLemma = ["semantic-matrix", "tfidf-distance", "semantic-gephi"]
 
 

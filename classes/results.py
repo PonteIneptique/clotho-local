@@ -1,19 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
+#Python CORE
 import sys
 
-try:
-	import classes.SQL as SQL
-except:
-	print "MySQL Class not available"
-	sys.exit()
-	
+#Shared class through Clotho
+from classes.SQL import SQL
 
 class Results(object):
 	def __init__(self, cache = False, web = False):
-		self.s = SQL.SQL(cache = cache, web = web)
+		self.s = SQL(cache = cache, web = web)
 		self.con = self.s.con
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 

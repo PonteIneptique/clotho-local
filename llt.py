@@ -7,64 +7,33 @@ import json
 import hashlib
 import os
 
-try:
-	from classes.initiate import Initiate
-	init = Initiate()
-	if init.check() == False:
-		if init.initiate() == False:
-			print "Unable to initiate the program. Check your rights on this folder."
-			sys.exit()
+#Other libraries
+from progressbar import ProgressBar, Counter, Timer
 
-except:
-	print "Unable to initiate the program. Check your rights on this folder."
-	sys.exit()
+#Clotho Classes
+from classes.cache import Cache
+from classes.initiate import Initiate
+from classes.query import Query
+from classes.SQL import SQL
+from classes.text import Text
+from classes.morph import Morph
+from classes.results import Results
+from classes.export import Export
 
+#Clotho Class opening
+init = Initiate()
+if init.check() == False:
+	if init.initiate() == False:
+		print "Unable to initiate the program. Check your rights on this folder."
+		sys.exit()
+
+q = Query()
+c = Cache()
+s = SQL()
+t = Text()
+m = Morph()
+r = Results(cache = True)
 modes = ["mysql"]
-try:
-	from classes.query import Query
-	q = Query()
-except:
-	print "Unable to load Query dependency"
-	sys.exit()
-
-try:
-	from classes.SQL import SQL
-	s = SQL()
-except:
-	print "Unable to load SQL dependency"
-	sys.exit()
-try:
-	from classes.text import Text
-	t = Text()
-except:
-	print "Unable to load Text dependency"
-	sys.exit()
-
-try:
-	from classes.morph import Morph
-	m = Morph()
-except:
-	print "Unable to load Morphology dependency"
-	sys.exit()
-
-try:
-	from classes.results import Results
-	r = Results(cache = True)
-except:
-	print "Unable to load Results dependency"
-	sys.exit()
-
-try:
-	from classes.export import Export
-except:
-	print "Unable to load Export dependency"
-	sys.exit()
-
-try:
-	from progressbar import ProgressBar, Counter, Timer
-except:
-	print "Unable to load ProgressBar dependency"
-	sys.exit()
 
 try:
 	import classes.PyLucene as PyL
@@ -74,13 +43,10 @@ try:
 except:
 	print "Lucene is not available"
 
-try:
-	from classes.cache import Cache
-	c = Cache()
-except:
-	print "Unable to load Cache dependency"
-	sys.exit()
 
+"""
+	Start of the "real" code
+"""
 q.welcome()
 
 if s.check() == False:
