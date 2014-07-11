@@ -32,8 +32,28 @@ from classes.tfidf import TFIDF
 class Corpus(object):
 	def __init__(self, data = {}, flexed = False):
 		self.folder = "./data/corpus/"
+		self.flexed = flexed
+		self.data = data
+
+	def w(self, data = False):
+		for term in data:
+			if isinstance(data[term][0], list):
+				replacement = ""
+				for sentence in data[term]:
+					replacement += " ".join(sentence) + "\n"
+				data[term] = replacement
+			else:
+				data[term] = " ".join(data[term])
+			with codecs.open("./data/corpus/" + term + ".txt", "w") as f:
+				f.write(data[term])
+				f.close()
+		return True
+
+	def rawCorpus(self, data = False):
+		if not self.data:
+			data = self.data
 		outputDictionary = {}
-		if flexed:
+		if self.flexed:
 			for term in data:
 				outputDictionary[term] = " ".join([word[0] for word in data[term]])
 		else:
@@ -42,12 +62,82 @@ class Corpus(object):
 				for word in data[term]:
 					for w in word[1]:
 						outputDictionary[term].append(w[0])
+		self.w(outputDictionary)
 
-		for term in outputDictionary:
-			outputDictionary[term] = " ".join(outputDictionary[term])
-			with codecs.open("./data/corpus/" + term + ".txt", "w") as f:
-				f.write(outputDictionary[term]);
-				f.close()
+	def windowCorpus(self, window = 4, data = False):
+		"""
+			Return a raw corpus / term where only the n-words left AND right are kept from the sentence.
+
+			Params
+			window (Int) - N window
+		"""
+		if not data:
+			data = self.data
+		outputDictionary = {}
+
+		#We merge everything in one sentence
+		for term in data:
+			outputDictionary[term] = []
+			sentence = []
+			sentence_text = ""
+			for word in data[term]:
+				lemma = []
+				if sentence_text != word[3]:
+					#Writing time
+					if len(sentence) > 0:
+						sentence = self.windowSentence(term, sentence, window)
+						outputDictionary[term].append(sentence)
+					#Creating the new sentence array
+					sentence_text = word[3]
+					sentence = []
+					print sentence_text
+
+				for w in word[1]:
+					lemma.append(w[0])
+				if len(lemma) > 0:
+					sentence.append(lemma)
+
+		if len(sentence) > 0:
+			sentence = self.windowSentence(term, sentence, window)
+			outputDictionary[term].append(sentence)
+
+		self.w(outputDictionary)
+		return True
+
+	def windowSentence(self, term = "", sentence = [], window = 0):
+		if len(sentence) <= 0:
+			return sentence
+
+
+		indexTerm = 0
+		min_index = 0
+		max_index = len(sentence) - 1
+		length = window * 2 + 1
+
+		for i in range(0,  max_index):
+			lemma = sentence[i]
+			if term in lemma:
+				indexTerm = i 
+
+				w = i - window
+				if w > min_index:
+					min_index = i - window
+
+				w = min_index + length
+				if w > max_index:
+					max_index = max_index + 1
+				else:
+					max_index = length + min_index
+				break
+
+		sentence = sentence[min_index:max_index]
+		s = []
+		for lemma in sentence:
+			for l in lemma:
+				if not term in lemma:	#Remove the term from the sentence 
+					s.append(l)
+		return s
+
 
 class Export(object):
 	def __init__(self, q = False):
@@ -424,6 +514,12 @@ class Export(object):
 	def corpus(self, data = {}):
 		""" Generation of plain-text corpus by term """
 		C = Corpus(data)
+		C.rawCorpus()
+
+	def fourWords(self, data = {}):
+		""" Generation of plain-text corpus by term """
+		C = Corpus(data)
+		C.windowCorpus(4)
 		
 class D3JS(object):
 	def text(self):

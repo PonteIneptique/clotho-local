@@ -2,14 +2,12 @@
 # -*- coding: utf-8 -*-
 
 
+#Python CORE
 import sys
 import os
 
-try:
-	from classes.morph import Morph
-except:
-	print "Unable to load morph class"
-	sys.exit()
+#Shared class through Clotho
+from classes.morph import Morph
 
 class Initiate(object):
 	def __init__(self):
