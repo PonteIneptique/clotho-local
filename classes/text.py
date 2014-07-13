@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 
 #Python CORE
-import sys
 import re
 import codecs
 
 #Python Libraries
 from bs4 import BeautifulSoup
-from  nltk.tokenize import word_tokenize, sent_tokenize
+import nltk
 
 #Shared class through Clotho
 from classes.SQL import SQL
@@ -116,14 +115,14 @@ class Text(object):
 		text -- The text in a string format
 		forms -- A list of forms corresponding to the declined query lemma
 		"""
-		sentences = sent_tokenize(text)
+		sentences = nltk.tokenize.sent_tokenize(text)
 		correct = []
 		for form in forms:
 
 			i = 0
 			while i < len(sentences):
 				#Last condition ensure that sentences has not been processed
-				if form in word_tokenize(sentences[i]) and sentences[i] not in self.processed:
+				if form in nltk.tokenize.word_tokenize(sentences[i]) and sentences[i] not in self.processed:
 					self.processed.append(sentences[i])
 					correct.append(sentences.pop(i))
 				else:
@@ -222,7 +221,7 @@ class Text(object):
 			for dot in self.dots:
 				sentence = sentence.replace(dot, " ")
 
-			sentence = word_tokenize(sentence)
+			sentence = nltk.tokenize.word_tokenize(sentence)
 			safe = True
 			for word in sentence:
 
