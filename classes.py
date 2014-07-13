@@ -2881,30 +2881,25 @@ class Query(object):
 			return self.yn("Input not recognized")
 
 	def options(self, question, options = False, intOnly = False):
-		answer = raw_input(question)
-		if intOnly:
-			if answer.isdigit():
-				if options:
-					if int(answer) in options:
-						return int(answer)
-					else:
-						return self.options(question, options, intOnly)
-				return int(answer)
-			else:
-				return self.options(question, options, intOnly)
+		if options:
+			s = ""
+			for i in range(0, len(options)):
+				s += " \n\t[ " + i + " ] " + options[i]
+			answer = raw_input(question + s)
 		else:
-			if answer.isdigit() and options:
+			answer = raw_input(question)
+
+		if answer.isdigit():
+			if options:
 				if int(answer) in options:
-					return int(answer)
+					return options[int(answer)]
 				else:
-					return self.options(question, options, intOnly)
-			elif options:
-				if answer in options:
-					return answer
-				else:
-					return self.options(question, options, intOnly)
-			else:
+					return self.options(question, options)
+			return int(answer)
+		else:
+			if options and answer in options:
 				return answer
+			return self.options(question, options)
 
 		return True
 
@@ -2982,7 +2977,7 @@ class Query(object):
 				print "[" + str(item[0]) + "]\t " + item[2] + " (Mode : " + item[1] + ")"
 		
 		q = raw_input( "Which one do you want to load ? (Type the number) \n - ")
-		if int(q) in correctAnswers:
+		if q.isdigit() and int(q) in correctAnswers:
 			self.q = self.sql.load(q)
 			return self.q
 		else:

@@ -7,58 +7,63 @@ import json
 import os
 
 #Other libraries
-import progressbar
 
 #Clotho Classes
-from classes import Cache, Initiate, Query, SQL, Text, Morph, Results, Export
+from classes import Cache, Initiate, Query, SQL, Text, Morph, Results, Export, PyLucene
 
-#Clotho Class opening
-init = Initiate()
-if init.check() == False:
-	if init.initiate() == False:
-		print "Unable to initiate the program. Check your rights on this folder."
-		sys.exit()
+class Clotho(object):
+	def __init__(self):
+		#Clotho Class opening
+		init = Initiate()
+		if init.check() == False:
+			if init.initiate() == False:
+				print "Unable to initiate the program. Check your rights on this folder."
+				sys.exit()
 
-q = Query()
-c = Cache()
-s = SQL()
-t = Text()
-m = Morph()
-r = Results(cache = True)
-modes = ["mysql"]
+		#Import classes
+		self.q = Query()
+		self.c = Cache()
+		self.s = SQL()
+		self.t = Text()
+		self.m = Morph()
+		self.r = Results(cache = True)
+		self.modes = ["mysql"]
+		
+		if PyLucene.luceneImport:
+			self.modes.append("lucene")
+			self.luc = PyLucene.PyLucene()
 
-try:
-	import classes.PyLucene as PyLucene
-	if PyLucene.luceneImport:
-		modes.append("lucene")
-		luc = PyLucene.PyLucene()
-except:
-	print "Lucene is not available"
+		self.saved = False
+		self.q.welcome()
 
+		if self.s.check() == False:
+			self.q.deco()
+			print "Setting up your database"
+			self.s.create()
+			self.q.deco()
 
-"""
-	Start of the "real" code
-"""
-q.welcome()
+	def initialOptions():
+		"""Offers to 
+			- Change Setup / Config
+			- Do Perseus Query
+			- Do JSON Load Query
+		"""
+		return True
 
-if s.check() == False:
-	q.deco()
-	print "Setting up your database"
-	s.create()
-	q.deco()
+	def loadJSON(self, filename):
+		with codecs.open(filename, "r", "utf-8") as f:
+			self.source = json.load(f)
+			self.q.q["name"] = filename
+			for data in self.source:
+				self.q.q["terms"].append(data)
+			f.close()
 
-filename = raw_input("Path to the file? \n ->")
-with codecs.open(filename, "r", "utf-8") as f:
-	source = json.load(f)
-	print "opened"
-	f.close()
+	def defineMode(self, mode = False):
+		if mode:
+			self.q.q["mode"] = mode
+		else:
+			self.q.q["mode"] = self.q.options("Mode :")
 
-q.q["name"] = filename
-q.q["mode"] = raw_input("Mode (Lemma, Entities)? \n ->")
-for data in source:
-	q.q["terms"].append(data)
-
-saved = False
 if q.process():
 	#PROCESS
 	terms =  {}
@@ -176,3 +181,6 @@ if exportOnGoing == True:
 
 		elif exportMean == "corpus":
 			e.corpus(data = terms)
+
+
+C = Clotho()
