@@ -1,21 +1,20 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+#Python CORE
 import sys
 
-try:
-	from numpy import zeros, mat, linalg
-except:
-	print "Unable to import Numpy"
-	sys.exit()
+#Python Libraries
+from numpy import zeros, mat, linalg
+import scipy as sp
+from sklearn.cluster import spectral_clustering
 
-try:
-	import scipy as sp
-except:
-	print "Unable to import scipy"
-	sys.exit()
+#Shared class through Clotho
 
-try:
-	from sklearn.cluster import spectral_clustering
-except:
-	print "Unable to import SkLearn"
+#Specific class
+
+#Python Warning
+
 
 class LSA(object):
 	
