@@ -16,6 +16,7 @@ from pprint import pprint
 #Python Libraries
 import numpy
 import scipy
+import sklearn
 import nltk
 import pylab
 import rdflib
@@ -121,9 +122,6 @@ class Corpus(object):
 	def windowSentence(self, term = "", sentence = [], window = 0):
 		if len(sentence) <= 0:
 			return sentence
-
-
-		indexTerm = 0
 		min_index = 0
 		max_index = len(sentence) - 1
 		length = window * 2 + 1
@@ -131,8 +129,6 @@ class Corpus(object):
 		for i in range(0,  max_index):
 			lemma = sentence[i]
 			if term in lemma:
-				indexTerm = i 
-
 				w = i - window
 				if w > min_index:
 					min_index = i - window
@@ -264,11 +260,6 @@ class Export(object):
 		"""	Clean the probability
 			-> Use self. data
 		"""
-		if self.ttAvailable == True:
-			pass
-			#computeEdges = self.edges + self.useTT()
-		else:
-			computeEdges = self.edges
 		edges = []
 		compute = {}
 		#We build an index
@@ -334,7 +325,6 @@ class Export(object):
 		"""
 		nodes = [node[0:2] for node in self.nodes if node[2] == "lemma"]
 		hashes = [self.hash(edge[0:2]) for edge in self.edges if edge[2] == "lemma-form"]
-		done = []
 		nodesclean = []
 
 		#Update triples according to new edges
