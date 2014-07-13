@@ -7,23 +7,23 @@ import sys
 import warnings
 
 #Python Libraries
-import MySQLdb as mdb
+import MySQLdb
 
 #Python Warning
-warnings.filterwarnings("ignore", category = mdb.Warning)
+warnings.filterwarnings("ignore", category = MySQLdb.Warning)
 
 class SQL(object):
 	def __init__(self, results = False, cache = False, web = False):
 		try:
 			self.debug = False
 			if results == True:
-				self.con  = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_results', charset='utf8');
+				self.con  = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_results', charset='utf8');
 			elif cache == True:
-				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache', charset='utf8');
+				self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache', charset='utf8');
 			elif web == True:
-				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'clotho_web', charset='utf8');
+				self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_web', charset='utf8');
 			else:
-				self.con = mdb.connect('localhost', 'perseus', 'perseus', 'perseus2', charset='utf8');
+				self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'perseus2', charset='utf8');
 
 			if self.debug:
 				cur = self.con.cursor()
@@ -42,13 +42,13 @@ class SQL(object):
 		keywords argument:
 		string -- String to be escaped
 		"""
-		return mdb.escape_string(string)
+		return MySQLdb.escape_string(string)
 		
 	def resConnection(self):
 		""" Test the connection to the MySQL DB "results"
 		"""
 		try:
-			self.results  = mdb.connect('localhost', 'perseus', 'perseus', 'results');
+			self.results  = MySQLdb.connect('localhost', 'perseus', 'perseus', 'results');
 
 			if self.debug:
 				cur = self.con.cursor()
@@ -129,7 +129,6 @@ class SQL(object):
 		keywords arguments
 		query --- The id of an element
 		"""
-		data = []
 		cur = self.con.cursor()
 		cur.execute("SELECT * FROM perseus.hib_chunks WHERE id='" + query + "'")
 
@@ -186,7 +185,6 @@ class SQL(object):
 		keywords arguments
 		identifier -- (Default false) When set, returns the parameters of a given query
 		"""
-		data = []
 		cur = self.con.cursor()
 
 		if identifier == False:
