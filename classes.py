@@ -2884,14 +2884,14 @@ class Query(object):
 		if options:
 			s = ""
 			for i in range(0, len(options)):
-				s += " \n\t[ " + i + " ] " + options[i]
-			answer = raw_input(question + s)
+				s += " \n\t[ " + str( i ) + " ] " + options[i]
+			answer = raw_input(question + s + "\n")
 		else:
-			answer = raw_input(question)
+			answer = raw_input(question + "\n")
 
 		if answer.isdigit():
 			if options:
-				if int(answer) in options:
+				if int(answer) in range(0, len(options)):
 					return options[int(answer)]
 				else:
 					return self.options(question, options)
@@ -3122,35 +3122,29 @@ class Query(object):
 			self.inputError(s)
 			return self.databaseMode(modes, deco = False)
 
-try:
-	import lucene
-	#Java imports
-	from java.io import File
-	from org.apache.lucene.store import MMapDirectory
-	from org.apache.lucene.analysis.standard import StandardAnalyzer
-	from org.apache.lucene.search import IndexSearcher
-	from org.apache.lucene.util import Version
-	from org.apache.lucene.queryparser.classic import QueryParser
-	from org.apache.lucene.index import DirectoryReader
 
-	luceneImport = True
-except:
-	luceneImport = False
 class PyLucene(object):
 	def __init__(self):
-		if luceneImport:
+		try:
+			import lucene
+			#Java imports
+			from java.io import File
+			from org.apache.lucene.store import MMapDirectory
+			from org.apache.lucene.analysis.standard import StandardAnalyzer
+			from org.apache.lucene.search import IndexSearcher
+			from org.apache.lucene.util import Version
+			from org.apache.lucene.queryparser.classic import QueryParser
+			from org.apache.lucene.index import DirectoryReader
 			self.lucene = True
-		else:
+			lucene.initVM()
+			indexDir = "texts/index"
+			directory = MMapDirectory(File(indexDir))
+			directory = DirectoryReader.open(directory)
+			self.analyzer = StandardAnalyzer(Version.LUCENE_30)
+			self.searcher = IndexSearcher(directory)
+			self.regexp = re.compile("(Perseus:text:[0-9]{4}\.[0-9]{2}\.[0-9]{4})")
+		except:
 			self.lucene = False
-
-		#Lucene connection
-		lucene.initVM()
-		indexDir = "texts/index"
-		directory = MMapDirectory(File(indexDir))
-		directory = DirectoryReader.open(directory)
-		self.analyzer = StandardAnalyzer(Version.LUCENE_30)
-		self.searcher = IndexSearcher(directory)
-		self.regexp = re.compile("(Perseus:text:[0-9]{4}\.[0-9]{2}\.[0-9]{4})")
 
 	def query(self, terms = []):
 		query = QueryParser(Version.LUCENE_30, "text", self.analyzer).parse(" OR ".join(terms))

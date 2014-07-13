@@ -9,7 +9,7 @@ import os
 #Other libraries
 
 #Clotho Classes
-from classes import Cache, Initiate, Query, SQL, Text, Morph, Results, Export, PyLucene
+from classes import Cache, Initiate, Query, SQL, Text, Morph, Results, Export, PyLucene, Setup
 
 class Clotho(object):
 	def __init__(self):
@@ -21,42 +21,44 @@ class Clotho(object):
 				sys.exit()
 
 		#Import classes
-		self.q = Query()
-		self.c = Cache()
-		self.s = SQL()
-		self.t = Text()
-		self.m = Morph()
-		self.r = Results(cache = True)
+		self.query = Query()
+		self.cache = Cache()
+		self.sql = SQL()
+		self.text = Text()
+		#self.morph = Morph()
+		self.results = Results(cache = True)
+		self.setup = Setup()
 		self.modes = ["mysql"]
 
-		if PyLucene.luceneImport:
+		if PyLucene().lucene:
 			self.modes.append("lucene")
-			self.luc = PyLucene.PyLucene()
+			self.luc = PyLucene()
 
 		self.saved = False
-		self.q.welcome()
+		self.exportOnGoing = False
+		self.query.welcome()
 
-		if self.s.check() == False:
-			self.q.deco()
+		if self.sql.check() == False:
+			self.query.deco()
 			print "Setting up your database"
-			self.s.create()
-			self.q.deco()
+			self.sql.create()
+			self.query.deco()
 
 	def initiatSetup(self):
-		self.q.setupExplanation()
-		self.s.conf["MySQL"]["identifiers"] = self.s.sqlId()
-		self.s.write()
-		self.q.deco()
+		self.query.setupExplanation()
+		self.setup.conf["MySQL"]["identifiers"] = self.setup.sqlId()
+		self.setup.write()
+		self.query.deco()
 
 		#Then the databases' name
-		self.s.dbs()
-		self.s.write()
-		self.q.deco()
+		self.setup.dbs()
+		self.setup.write()
+		self.query.deco()
 
 		#Then the table
-		self.q.deco()
-		self.s.tables()
-		self.q.deco()
+		self.query.deco()
+		self.setup.tables()
+		self.query.deco()
 
 		self.initialOptions()
 
@@ -66,7 +68,7 @@ class Clotho(object):
 			- Do Perseus Query
 			- Do JSON Load Query
 		"""
-		o = self.q.options("What action do you want to perform ?", ["Change Setup / Config", "Do Perseus Query", "Do JSON Load Query"])
+		o = self.query.options("What action do you want to perform ?", ["Change Setup / Config", "Do Perseus Query", "Do JSON Load Query"])
 
 		if o == "Do JSON Load Query":
 			self.loadJSON(raw_input("Path for the file : "))
@@ -81,138 +83,131 @@ class Clotho(object):
 			filename = self.filename
 		with codecs.open(filename, "r", "utf-8") as f:
 			self.source = json.load(f)
-			self.q.q["name"] = filename
+			self.query.q["name"] = filename
 			for data in self.source:
-				self.q.q["terms"].append(data)
+				self.query.q["terms"].append(data)
 			self.defineMode(False, self.processJson())
 			f.close()
 
+	def processJson(self):
+		if self.query.process():
+			terms = {}
+			for term in self.query.q["terms"]:
+				print term
+				terms[term] = []
+				sentences = [item for item in self.source[term] if "text" in item and len(item["text"]) > 2]
+				#For each sentence, we now update terms
+				for item in sentences:
+					sentence = item["text"]
+					lemma = self.cache.sentence(sentence)
+
+					if lemma == False:
+						lemma = self.text.lemmatize(sentence, mode = self.query.q["mode"], terms = self.query.q["terms"])
+						self.cache.sentence(sentence, data = lemma)
+						
+					lemma = self.text.m.filter(lemma, terms = terms, mode = self.query.q["mode"].lower(), stopwords = self.text.stopwords)
+
+					for lem in lemma:
+						terms[term].append([lem[0], lem[1], item["author"], item["text"]])
+		self.terms = terms
+
 	def defineMode(self, mode = False, callback = False):
 		if mode:
-			self.q.q["mode"] = mode
+			self.query.q["mode"] = mode
 		else:
-			self.q.q["mode"] = self.q.options("Mode :", ["Lemma", "Exempla"])
+			self.query.q["mode"] = self.query.options("Mode :", ["Lemma", "Exempla"])
 
 		if type(callback) == "<type 'function'>":
 			callback()
 
-if q.process():
-	#PROCESS
-	terms =  {}
-	"""
-		terms : {
-			term : [
-				[form, lemma, text, sentence]
-			]
-		}
-	"""
-	terms = {}
-	for term in q.q["terms"]:
-		print term
-		terms[term] = []
-		sentences = [item for item in source[term] if "text" in item and len(item["text"]) > 2]
-		#For each sentence, we now update terms
-		for item in sentences:
-			sentence = item["text"]
-			lemma = c.sentence(sentence)
+	def cacheProcess(self):
+		if self.cache.search(self.query.q, data = self.terms) == False:
+			print "Unable to cache results. Check your rights on folder /cache/search"
 
-			if lemma == False:
-				lemma = t.lemmatize(sentence, mode = q.q["mode"], terms = q.q["terms"])
-				c.sentence(sentence, data = lemma)
+	def saveResults(self):
+		self.query.deco()
+		if self.query.saveResults():
+			self.results.clean()
+			for term in self.terms:
+				self.results.save(self.terms[term])
+			print "Results saved"
+			self.saved = True
+
+	def preExport(self):
+		#To be done
+		if self.saved == True:
+			self.exportOnGoing = True
+		else:
+			jsonExists =self.cache.search(self.query.q, check = True)
+			if jsonExists:
+				terms = self.cache.search(self.query.q)
+				self.exportOnGoing = True
 				
-			lemma = t.m.filter(lemma, terms = terms, mode = q.q["mode"].lower(), stopwords = t.stopwords)
-
-			for lem in lemma:
-				terms[term].append([lem[0], lem[1], item["author"], item["text"]])
-
-	#Caching results
-	if c.search(q.q, data = terms) == False:
-		print "Unable to cache results. Check your rights on folder /cache/search"
-
-	q.deco()
-	if q.saveResults():
-		r.clean()
-		for term in terms:
-			r.save(terms[term])
-		print "Results saved"
-		saved = True
-
-exportOnGoing = False
-#To be done
-if saved == True:
-	exportOnGoing = True
-else:
-	jsonExists = c.search(q.q, check = True)
-	if jsonExists:
-		terms = c.search(q.q)
-		exportOnGoing = True
-		
-		if not c.nodes(q.q, check = True):
-			r.clean()
-			print "Saving"
-			for term in terms:
-				r.save(terms[term])
-	else:
-		print "Cache doesnt exist. Unable to load any data for export"
-
-
-"""
-if exportOnGoing == True:
-	e = Export(q.q)
-	e.nodification()
-	while q.exportResults():
-		print "Nodification done"
-
-		exportMean = q.exportMean()
-
-
-		if exportMean != "mysql":
-			if q.cleanProbability():
-				e.cleanProbability();
-
-			if exportMean  not in q.exportLemma:
-				gephiMode = "sentence"
-				if q.exportLinkType() == "lemma":
-					gephiMode = "lemma"
-					e.lemma(terms = q.q["terms"])
+				if not self.cache.nodes(self.query.q, check = True):
+					self.results.clean()
+					print "Saving"
+					for term in terms:
+						self.results.save(terms[term])
 			else:
-				e.lemma(terms = q.q["terms"])
-			
-		if exportMean == "gephi":
-			e.gephi(gephiMode)
-			print "Export Done"
+				print "Cache doesnt exist. Unable to load any data for export"
 
-		elif exportMean == "mysql":
-			e.ClothoWeb(terms = terms, query = q.q["terms"])
-			print "SQL export done"
+		if self.exportOnGoing:
+			self.exportation()
 
-		elif exportMean == "d3js-matrix":
+	def exportation(self):
+		#Should depend on type of export...
+		e = Export(self.query.q)
+		e.nodification()
+		while self.query.exportResults():
+			print "Nodification done"
 
-			cluster = q.clustering()
+			exportMean = self.query.exportMean()
 
-			threshold = q.thresholdOne()
 
-			e.D3JSMatrix(threshold = threshold, cluster = cluster)
-			filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/D3JS/index.html"
-			try:
-				import webbrowser
-				webbrowser.open("file://"+filepath,new=2)
-			except:
-				print "File available at " + filepath
+			if exportMean != "mysql":
+				if self.query.cleanProbability():
+					e.cleanProbability();
 
-		elif exportMean == "semantic-matrix":
-			# It is needed for Export.semanticMatrix() to have lemma-lemma links 
-			e.semanticMatrix(terms = q.q["terms"])
+				if exportMean  not in self.query.exportLemma:
+					gephiMode = "sentence"
+					if self.query.exportLinkType() == "lemma":
+						gephiMode = "lemma"
+						e.lemma(terms = self.query.q["terms"])
+				else:
+					e.lemma(terms = self.query.q["terms"])
+				
+			if exportMean == "gephi":
+				e.gephi(gephiMode)
+				print "Export Done"
 
-		elif exportMean == "tfidf-distance":
-			# It is needed for Export.semanticMatrix() to have lemma-lemma links
-			e.tfidfDistance(terms = q.q["terms"])
+			elif exportMean == "mysql":
+				e.ClothoWeb(terms = self.terms, query = self.query.q["terms"])
+				print "SQL export done"
 
-		elif exportMean == "semantic-gephi":
-			e.semanticGephi(terms = q.q["terms"])
+			elif exportMean == "d3js-matrix":
+				cluster = self.query.clustering()
+				threshold =self.query.thresholdOne()
+				e.D3JSMatrix(threshold = threshold, cluster = cluster)
+				filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/D3JS/index.html"
+				try:
+					import webbrowser
+					webbrowser.open("file://"+filepath,new=2)
+				except:
+					print "File available at " + filepath
 
-		elif exportMean == "corpus":
-			e.corpus(data = terms)
-"""
+			elif exportMean == "semantic-matrix":
+				# It is needed for Export.semanticMatrix() to have lemma-lemma links 
+				e.semanticMatrix(terms = self.query.q["terms"])
+
+			elif exportMean == "tfidf-distance":
+				# It is needed for Export.semanticMatrix() to have lemma-lemma links
+				e.tfidfDistance(terms = self.query.q["terms"])
+
+			elif exportMean == "semantic-gephi":
+				e.semanticGephi(terms = self.query.q["terms"])
+
+			elif exportMean == "corpus":
+				e.corpus(data = self.terms)
 
 C = Clotho()
+C.initialOptions()
