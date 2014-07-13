@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
+#Python CORE
 import sys
 
 
@@ -11,5 +11,3 @@ class TT(object):
 			self.tt = TreeTagger(encoding='latin-1',language='latin')
 		except:
 			print "Unable to load latin dependency of treetagger"
-
-#t = TT()

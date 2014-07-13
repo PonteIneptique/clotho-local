@@ -1,48 +1,33 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
+#Python CORE
 import sys
 import re
 import codecs
 
-try:
-	from bs4 import BeautifulSoup
-except:
-	print "BS not installed"
-	sys.exit()
+#Python Libraries
+from bs4 import BeautifulSoup
+from  nltk.tokenize import word_tokenize, sent_tokenize
 
-try:
-	import classes.SQL as SQL
-except:
-	print "Error importing MYSQL tool"
-	sys.exit()
+#Shared class through Clotho
+from classes.SQL import SQL
+from classes.results import Results
+from classes.morph import Morph
 
-try:
-	import classes.results as R
-except:
-	print "Error importing results tool"
-	sys.exit()
+#Specific class
 
-try:
-	import classes.morph as Morph
-except:
-	print "Error importing Morph tool"
-	sys.exit()
+#Python Warning
 
-try:
-	from  nltk.tokenize import word_tokenize, sent_tokenize
-except:
-	print "Unable to import nltk.tokenize"
-	sys.exit()
+
 
 class Text(object):
 	def __init__(self):
 
 		#Instances
-		self.sql = SQL.SQL()
-		self.m = Morph.Morph()
-		self.r = R.Results(cache=True)
+		self.sql = SQL()
+		self.m = Morph()
+		self.r = Results(cache=True)
 
 		self.cache = True
 

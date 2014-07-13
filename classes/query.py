@@ -36,11 +36,32 @@ class Query(object):
 		else:
 			return self.yn("Input not recognized")
 
-	def number(self, question, options = False, intOnly = False):
+	def options(self, question, options = False, intOnly = False):
 		answer = raw_input(question)
-		"""if intOnly:
-			if answer.
-		if answer.isdigit() and answer :"""
+		if intOnly:
+			if answer.isdigit():
+				if options:
+					if int(answer) in options:
+						return int(answer)
+					else:
+						return self.options(question, options, intOnly)
+				return int(answer)
+			else:
+				return self.options(question, options, intOnly)
+		else:
+			if answer.isdigit() and options:
+				if int(answer) in options:
+					return int(answer)
+				else:
+					return self.options(question, options, intOnly)
+			elif options:
+				if answer in options:
+					return answer
+				else:
+					return self.options(question, options, intOnly)
+			else:
+				return answer
+
 		return True
 
 	def welcome(self):

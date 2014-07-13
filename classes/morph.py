@@ -1,32 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
+#Python CORE
 import sys
 import re
 import json
 from string import digits
-try:
-	from xml.etree.cElementTree import iterparse
-except:
-	print "Unable to load xml.etree.cElementTree"
-	sys.exit()
 
-try:
-	from classes.SQL import SQL
-except:
-	print "Error importing MYSQL tool"
-	sys.exit()
+#Python Libraries
+from xml.etree.cElementTree import iterparse
+from progressbar import ProgressBar, Counter, Timer
+import requests
 
-try:
-	from classes.cache import Cache
-except:
-	print "Unable to load classes.cache "
-	sys.exit()
-try:
-	from progressbar import ProgressBar, Counter, Timer
-except:
-	print "Error importing progress bar "
-	sys.exit()
+#Shared class through Clotho
+from classes.SQL import SQL
+from classes.cache import Cache
+
+#Specific class
 
 class Morph(object):
 	def __init__(self):
@@ -42,12 +33,7 @@ class Morph(object):
 		romanNumeral = "^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$"
 		self.num = re.compile(romanNumeral)
 
-		try:
-			import requests
-			self.r = requests
-		except:
-			print "Unable to load Request. http://docs.python-requests.org/en/latest/user/install/#install"
-			self.web = False
+		self.r = requests
 
 	def perseid(self, lemma):
 		"""	Returns a lemma according to perseid morphology service

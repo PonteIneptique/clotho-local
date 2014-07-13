@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 
 
+#Python CORE
 import sys
-
-try:
-	import MySQLdb as mdb
-except:
-	print "MySQLdb not installed. \n apt-get install python-mysqldb"
-	sys.exit()
-
 import warnings
+
+#Python Libraries
+import MySQLdb as mdb
+
+#Python Warning
 warnings.filterwarnings("ignore", category = mdb.Warning)
 
 class SQL(object):

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+#Python CORE
 import sys
 import codecs
 import json
@@ -8,18 +9,13 @@ import warnings
 import re
 import os
 import tarfile
+import wget
+import importlib
 
-try:
-	import MySQLdb as mdb
-except:
-	print "MySQLdb not installed. \n apt-get install python-mysqldb"
+#Python Libraries
+import MySQLdb as mdb
 
-try:
-	import wget
-except:
-	print "wget not installed. \n Do a `pip install wget`"
-	sys.exit()
-
+#Python Warning
 warnings.filterwarnings("ignore", category = mdb.Warning)
 
 class Setup(object):
@@ -81,7 +77,6 @@ class Setup(object):
 		self.texts = "http://www.perseus.tufts.edu/hopper/opensource/downloads/data/sgml.xml.texts.tar.gz"
 
 	def dependencyType(self, dic):
-		import importlib
 		cmd = []
 		dep = []
 		for mod in dic:

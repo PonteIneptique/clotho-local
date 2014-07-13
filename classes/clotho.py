@@ -1,16 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+#Python CORE
 import os
 import sys
 
-try:
-	if __name__ == "__main__":
-		from SQL import SQL
-	else:
-		from classes.SQL import SQ
-except:
-	sql_error = "Unable to load SQL dependecy"
+#Clotho Shared
+from classes.SQL import SQL
 
 class Clotho(object):
 	def __init__(self, terms = [], query_terms = []):

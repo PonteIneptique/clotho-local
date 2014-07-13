@@ -1,14 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pylab
-import rdflib
+#Python CORE
 from pprint import pprint
 from math import log
+
+#Python Libraries
+import pylab
+import rdflib
 import numpy
 import nltk
 import scipy.cluster.hierarchy as hier
 import scipy.spatial.distance as dist
+
+#Shared class through Clotho
+
+#Specific class
+
+#Python Warning
 
 
 class TFIDF(object):

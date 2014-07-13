@@ -20,6 +20,7 @@ import pylab
 import rdflib
 import wikipedia
 from SPARQLWrapper import SPARQLWrapper, JSON
+import requests
 
 #Shared class through Clotho
 from classes.cache import Cache
@@ -36,11 +37,7 @@ class SMa(object):
 		terms -- Query terms
 		prevent -- Prevent autocompute for debugging
 		"""
-		try:
-			import requests
-			self.r = requests
-		except:
-			print "Unable to load Request. http://docs.python-requests.org/en/latest/user/install/#install"
+		self.r = requests
 
 		self.rdf = rdflib.Graph()
 		self.cache = Cache()
