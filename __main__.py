@@ -4,21 +4,13 @@
 import sys
 import codecs 
 import json
-import hashlib
 import os
 
 #Other libraries
-from progressbar import ProgressBar, Counter, Timer
+import progressbar
 
 #Clotho Classes
-from classes.cache import Cache
-from classes.initiate import Initiate
-from classes.query import Query
-from classes.SQL import SQL
-from classes.text import Text
-from classes.morph import Morph
-from classes.results import Results
-from classes.export import Export
+from classes import Cache, Initiate, Query, SQL, Text, Morph, Results, Export
 
 #Clotho Class opening
 init = Initiate()
@@ -36,10 +28,10 @@ r = Results(cache = True)
 modes = ["mysql"]
 
 try:
-	import classes.PyLucene as PyL
-	if PyL.luceneImport:
+	import classes.PyLucene as PyLucene
+	if PyLucene.luceneImport:
 		modes.append("lucene")
-		luc = PyL.PyLucene()
+		luc = PyLucene.PyLucene()
 except:
 	print "Lucene is not available"
 
