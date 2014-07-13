@@ -28,7 +28,7 @@ class Clotho(object):
 		self.m = Morph()
 		self.r = Results(cache = True)
 		self.modes = ["mysql"]
-		
+
 		if PyLucene.luceneImport:
 			self.modes.append("lucene")
 			self.luc = PyLucene.PyLucene()
@@ -42,27 +42,59 @@ class Clotho(object):
 			self.s.create()
 			self.q.deco()
 
-	def initialOptions():
+	def initiatSetup(self):
+		self.q.setupExplanation()
+		self.s.conf["MySQL"]["identifiers"] = self.s.sqlId()
+		self.s.write()
+		self.q.deco()
+
+		#Then the databases' name
+		self.s.dbs()
+		self.s.write()
+		self.q.deco()
+
+		#Then the table
+		self.q.deco()
+		self.s.tables()
+		self.q.deco()
+
+		self.initialOptions()
+
+	def initialOptions(self):
 		"""Offers to 
 			- Change Setup / Config
 			- Do Perseus Query
 			- Do JSON Load Query
 		"""
+		o = self.q.options("What action do you want to perform ?", ["Change Setup / Config", "Do Perseus Query", "Do JSON Load Query"])
+
+		if o == "Do JSON Load Query":
+			self.loadJSON(raw_input("Path for the file : "))
+		elif o == "Do Perseus Query":
+			self.perseusQuery()
+		else:
+			self.initiatSetup()
 		return True
 
-	def loadJSON(self, filename):
+	def loadJSON(self, filename = False):
+		if not filename and self.filename:
+			filename = self.filename
 		with codecs.open(filename, "r", "utf-8") as f:
 			self.source = json.load(f)
 			self.q.q["name"] = filename
 			for data in self.source:
 				self.q.q["terms"].append(data)
+			self.defineMode(False, self.processJson())
 			f.close()
 
-	def defineMode(self, mode = False):
+	def defineMode(self, mode = False, callback = False):
 		if mode:
 			self.q.q["mode"] = mode
 		else:
-			self.q.q["mode"] = self.q.options("Mode :")
+			self.q.q["mode"] = self.q.options("Mode :", ["Lemma", "Exempla"])
+
+		if type(callback) == "<type 'function'>":
+			callback()
 
 if q.process():
 	#PROCESS
@@ -124,7 +156,7 @@ else:
 		print "Cache doesnt exist. Unable to load any data for export"
 
 
-
+"""
 if exportOnGoing == True:
 	e = Export(q.q)
 	e.nodification()
@@ -169,11 +201,11 @@ if exportOnGoing == True:
 				print "File available at " + filepath
 
 		elif exportMean == "semantic-matrix":
-			# It is needed for Export.semanticMatrix() to have lemma-lemma links """
+			# It is needed for Export.semanticMatrix() to have lemma-lemma links 
 			e.semanticMatrix(terms = q.q["terms"])
 
 		elif exportMean == "tfidf-distance":
-			# It is needed for Export.semanticMatrix() to have lemma-lemma links """
+			# It is needed for Export.semanticMatrix() to have lemma-lemma links
 			e.tfidfDistance(terms = q.q["terms"])
 
 		elif exportMean == "semantic-gephi":
@@ -181,6 +213,6 @@ if exportOnGoing == True:
 
 		elif exportMean == "corpus":
 			e.corpus(data = terms)
-
+"""
 
 C = Clotho()
