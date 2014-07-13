@@ -5,7 +5,6 @@ import json
 import codecs
 import hashlib
 import os
-import sys
 
 class Cache(object):
 	def __init__(self):

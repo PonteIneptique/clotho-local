@@ -13,10 +13,10 @@ import wget
 import importlib
 
 #Python Libraries
-import MySQLdb as mdb
+import MySQLdb
 
 #Python Warning
-warnings.filterwarnings("ignore", category = mdb.Warning)
+warnings.filterwarnings("ignore", category = MySQLdb.Warning)
 
 class Setup(object):
 	def __init__(self):
@@ -152,12 +152,12 @@ class Setup(object):
 		"""	Connect to the database using conf
 		"""
 		if mode == "perseus":
-			self.perseus = mdb.connect("localhost", self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], self.conf["MySQL"]["database"]["perseus"], charset='utf8')
+			self.perseus = MySQLdb.connect("localhost", self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], self.conf["MySQL"]["database"]["perseus"], charset='utf8')
 			self.perseusConnected = True
 			return True
 
 		try:
-			self.con = mdb.connect('localhost', self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], charset='utf8')
+			self.con = MySQLdb.connect('localhost', self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], charset='utf8')
 			self.connected = True
 			return True
 		except:
@@ -186,7 +186,7 @@ class Setup(object):
 		data["password"] = raw_input("Enter your password : ").replace(" ", "")
 
 		try:
-			mdb.connect('localhost', data["user"], data["password"], charset='utf8')
+			MySQLdb.connect('localhost', data["user"], data["password"], charset='utf8')
 			return data
 		except:
 			return self.sqlId(data)
