@@ -38,6 +38,8 @@ class Clotho(object):
 		self.exportOnGoing = False
 		self.processed = False
 		self.query.welcome()
+		self.mode = False
+		self.terms = {}
 
 		if self.sql.check() == False:
 			self.query.deco()
@@ -87,7 +89,7 @@ class Clotho(object):
 			self.query.q["name"] = filename
 			for data in self.source:
 				self.query.q["terms"].append(data)
-			self.defineMode(False, self.processJson())
+			self.defineMode(False, self.processJson)
 			f.close()
 
 	def processJson(self):
@@ -109,24 +111,36 @@ class Clotho(object):
 
 					for lem in lemma:
 						terms[term].append([lem[0], lem[1], item["author"], item["text"]])
+			self.cacheProcess(terms)
+		else:
+			jsonExists =self.cache.search(self.query.q, check = True)
+			if jsonExists:
+				terms = self.cache.search(self.query.q)
+				self.exportOnGoing = True
+			else:
+				print "Cache doesnt exist. Unable to load any data for export"
+				self.processJson()
+				
 		self.terms = terms
-		self.cacheProcess()
 		self.processed = True
 
 	def defineMode(self, mode = False, callback = False):
-		if mode:
+		if mode ==True:
 			self.query.q["mode"] = mode
 		else:
-			if self.mode:
+			if self.mode == True:
 				self.query.q["mode"] = mode
 			else:
 				self.query.q["mode"] = self.query.options("Mode :", ["Lemma", "Exempla"])
 
-		if type(callback) == "<type 'function'>":
+		t = str(type(callback))
+		if t== "<type 'instancemethod'>" or t == "<type 'instancemethod'>":
 			callback()
 
-	def cacheProcess(self):
-		if self.cache.search(self.query.q, data = self.terms) == False:
+	def cacheProcess(self, terms = False):
+		if terms == False:
+			terms = self.terms
+		if self.cache.search(self.query.q, data = terms) == False:
 			print "Unable to cache results. Check your rights on folder /cache/search"
 
 	def saveResults(self):
@@ -141,20 +155,12 @@ class Clotho(object):
 		#To be done
 		if self.saved == True:
 			self.exportOnGoing = True
-		else:
-			jsonExists =self.cache.search(self.query.q, check = True)
-			if jsonExists:
-				terms = self.cache.search(self.query.q)
-				self.exportOnGoing = True
-				
-				if not self.cache.nodes(self.query.q, check = True):
-					self.results.clean()
-					print "Saving"
-					for term in terms:
-						self.results.save(terms[term])
-			else:
-				print "Cache doesnt exist. Unable to load any data for export"
-
+		else:				
+			if not self.cache.nodes(self.query.q, check = True):
+				self.results.clean()
+				print "Saving"
+				for term in terms:
+					self.results.save(terms[term])
 		if self.exportOnGoing:
 			self.exportation()
 
