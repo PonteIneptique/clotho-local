@@ -2917,18 +2917,22 @@ class Query(object):
 		self.q["threshold"] = self.yn("Format your threshold like beginning-end  : \n y/n - ")
 		#Checking
 
+	def mode(self):
+		return self.options("Mode :", ["Lemma", "Exempla"])
+
 	def config(self):
 		self.deco()
 		self.q["name"] = raw_input("Name your query : \n - ")
 		print "You choosed " + self.q["name"]
 
 		print "Choose your modes :"
-		self.q["mode"] = raw_input("Available : Entities | Lemma | Entities,Lemma : \n - ")
+		self.q["mode"] = self.mode()
 		print "You choosed " + self.q["mode"]
 
+		"""	To be included later
 		self.q["threshold"] = self.yn("Do you want to apply a date threshold ?")
-
 		print "You choosed " + self.q["threshold"]
+		"""
 
 	def lemmas(self):
 
@@ -3147,6 +3151,15 @@ class PyLucene(object):
 			self.lucene = False
 
 	def query(self, terms = []):
+		import lucene
+		#Java imports
+		from java.io import File
+		from org.apache.lucene.store import MMapDirectory
+		from org.apache.lucene.analysis.standard import StandardAnalyzer
+		from org.apache.lucene.search import IndexSearcher
+		from org.apache.lucene.util import Version
+		from org.apache.lucene.queryparser.classic import QueryParser
+		from org.apache.lucene.index import DirectoryReader
 		query = QueryParser(Version.LUCENE_30, "text", self.analyzer).parse(" OR ".join(terms))
 		MAX = 1000
 		hits = self.searcher.search(query, MAX)

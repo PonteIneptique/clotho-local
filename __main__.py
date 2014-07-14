@@ -25,14 +25,14 @@ class Clotho(object):
 		self.cache = Cache()
 		self.sql = SQL()
 		self.text = Text()
-		#self.morph = Morph()
+		self.morph = Morph()
 		self.results = Results(cache = True)
 		self.setup = Setup()
 		self.modes = ["mysql"]
 
 		if PyLucene().lucene:
 			self.modes.append("lucene")
-			self.luc = PyLucene()
+			self.PyLucene = PyLucene()
 
 		self.saved = False
 		self.exportOnGoing = False
@@ -71,15 +71,28 @@ class Clotho(object):
 			- Do Perseus Query
 			- Do JSON Load Query
 		"""
-		o = self.query.options("What action do you want to perform ?", ["Change Setup / Config", "Do Perseus Query", "Do JSON Load Query"])
+		o = self.query.options("What action do you want to perform ?", ["Change Setup / Config", "Do Perseus Query", "Load a previous Perseus Query", "Do JSON Load Query"])
 
 		if o == "Do JSON Load Query":
 			self.loadJSON(raw_input("Path for the file : "))
+		elif o == "Load a previous Perseus Query":
+			self.loadQuery()
 		elif o == "Do Perseus Query":
 			self.perseusQuery()
 		else:
 			self.initiatSetup()
 		return True
+
+	def loadQuery(self):
+		self.query.load()
+		self.processPerseus()
+
+	def perseusQuery(self):
+		self.query.config()
+		self.query.lemmas()
+		#Save
+		self.query.save()
+		self.processPerseus()
 
 	def loadJSON(self, filename = False):
 		if not filename and self.filename:
@@ -91,6 +104,70 @@ class Clotho(object):
 				self.query.q["terms"].append(data)
 			self.defineMode(False, self.processJson)
 			f.close()
+
+	def processPerseus(self):
+		print self.query.q
+		if self.query.process():
+			mode = self.query.databaseMode(self.modes)
+			#PROCESS
+			terms =  {}
+			for term in self.query.q["terms"]:
+
+				#We get the morph
+				morphs = self.morph.all(term)
+
+				""" To add morphs ...
+				if len(morphs) == 0:
+					newmorphs = q.newmorphs(term)
+					if len(newmorphs) > 0:
+						m.save(newmorphs)
+				"""
+						
+				if mode == "mysql":
+					occ, l = self.sql.occurencies(term)
+				elif mode == "lucene":
+					occ, l = self.PyLucene.occurencies(term, morphs)
+
+				terms[term] = []
+
+
+				if l > 0:
+					for o in occ:
+						#Getting the chunk
+						if mode == "mysql":
+							d, l = self.sql.chunk(o)
+						elif mode == "lucene":
+							d, l = self.PyLucene.chunk(o)
+
+						#Reading chunk
+						section = self.text.chunk(d, mode = mode)
+						#Now search for our term
+						sentences = self.text.find(section, morphs)
+						#For each sentence, we now update terms
+						for sentence in sentences:
+							lemma = self.cache.sentence(sentence)
+
+							if lemma == False:
+								lemma = self.text.lemmatize(sentence, mode = self.query.q["mode"], terms = self.query.q["terms"])
+								self.cache.sentence(sentence, data = lemma)
+								
+							lemma = self.text.m.filter(lemma, terms = terms, mode = self.query.q["mode"], stopwords = self.text.stopwords)
+
+							for lem in lemma:
+								terms[term].append([lem[0], lem[1], d, sentence])
+			self.cacheProcess(terms)
+		else:
+			jsonExists =self.cache.search(self.query.q, check = True)
+			if jsonExists:
+				terms = self.cache.search(self.query.q)
+				self.exportOnGoing = True
+			else:
+				print "Cache doesnt exist. Unable to load any data for export"
+				self.initialOptions()
+				return True
+
+		self.terms = terms
+		self.processed = True
 
 	def processJson(self):
 		if self.query.process():
@@ -120,6 +197,7 @@ class Clotho(object):
 			else:
 				print "Cache doesnt exist. Unable to load any data for export"
 				self.processJson()
+				return True
 				
 		self.terms = terms
 		self.processed = True
@@ -131,7 +209,7 @@ class Clotho(object):
 			if self.mode == True:
 				self.query.q["mode"] = mode
 			else:
-				self.query.q["mode"] = self.query.options("Mode :", ["Lemma", "Exempla"])
+				self.query.q["mode"] = self.query.mode()
 
 		t = str(type(callback))
 		if t== "<type 'instancemethod'>" or t == "<type 'instancemethod'>":
@@ -159,8 +237,8 @@ class Clotho(object):
 			if not self.cache.nodes(self.query.q, check = True):
 				self.results.clean()
 				print "Saving"
-				for term in terms:
-					self.results.save(terms[term])
+				for term in self.terms:
+					self.results.save(self.terms[term])
 		if self.exportOnGoing:
 			self.exportation()
 
