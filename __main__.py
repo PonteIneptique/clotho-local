@@ -36,6 +36,7 @@ class Clotho(object):
 
 		self.saved = False
 		self.exportOnGoing = False
+		self.processed = False
 		self.query.welcome()
 
 		if self.sql.check() == False:
@@ -93,7 +94,6 @@ class Clotho(object):
 		if self.query.process():
 			terms = {}
 			for term in self.query.q["terms"]:
-				print term
 				terms[term] = []
 				sentences = [item for item in self.source[term] if "text" in item and len(item["text"]) > 2]
 				#For each sentence, we now update terms
@@ -110,12 +110,17 @@ class Clotho(object):
 					for lem in lemma:
 						terms[term].append([lem[0], lem[1], item["author"], item["text"]])
 		self.terms = terms
+		self.cacheProcess()
+		self.processed = True
 
 	def defineMode(self, mode = False, callback = False):
 		if mode:
 			self.query.q["mode"] = mode
 		else:
-			self.query.q["mode"] = self.query.options("Mode :", ["Lemma", "Exempla"])
+			if self.mode:
+				self.query.q["mode"] = mode
+			else:
+				self.query.q["mode"] = self.query.options("Mode :", ["Lemma", "Exempla"])
 
 		if type(callback) == "<type 'function'>":
 			callback()
@@ -130,7 +135,6 @@ class Clotho(object):
 			self.results.clean()
 			for term in self.terms:
 				self.results.save(self.terms[term])
-			print "Results saved"
 			self.saved = True
 
 	def preExport(self):
@@ -210,4 +214,13 @@ class Clotho(object):
 				e.corpus(data = self.terms)
 
 C = Clotho()
-C.initialOptions()
+
+cmds = []
+if len(cmds) == 0:
+	C.initialOptions()
+
+if C.processed == True:
+	C.saveResults()
+
+C.preExport()
+C.exportation()
