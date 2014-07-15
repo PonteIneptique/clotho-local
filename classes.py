@@ -1408,7 +1408,7 @@ class Corpus(object):
 				if sentence_text != word[3]:
 					#Writing time
 					if len(sentence) > 0:
-						sentence = self.LDASequence(sentence, word[2])
+						sentence = self.LDASequence(sentence, word[2], term)
 						outputDictionary[term].append(sentence)
 					#Creating the new sentence array
 					sentence_text = word[3]
@@ -1420,8 +1420,7 @@ class Corpus(object):
 					sentence.append(lemma)
 
 		if len(sentence) > 0:
-			sentence = self.LDASequence(sentence, word[2])
-			print sentence
+			sentence = self.LDASequence(sentence, word[2], term)
 			outputDictionary[term].append(sentence)
 
 		self.w(outputDictionary)
@@ -1435,14 +1434,15 @@ class Corpus(object):
 
 		return s
 
-	def LDASequence(self, sentence, author):
+	def LDASequence(self, sentence, author, term):
 		author = self.urlify(author)
 		s = [[author + "\t"], [author + "\t"]]
 		s = s + sentence
 		q = []
 		for l in s:
-			for i in l:
-				q.append(i)
+			if term not in l:
+				for i in l:
+					q.append(i)
 
 		return q
 
