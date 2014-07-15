@@ -248,14 +248,15 @@ class Clotho(object):
 			e = Export(self.query.q, self.query)
 			exportMean = self.query.exportMean(e)
 			e.terms = self.terms
+			self.query.export = e
 
 			fn = e.options[exportMean]
 
-			if fn["probability"] == 1 or (fn["probability"] == 0 and self.query.cleanProbability()):
-				e.cleanProbability()
-
 			if fn["nodification"] == 1 or(fn["nodification"] == 0 and self.query.nodification()):
 				e.nodification()
+
+			if fn["probability"] == 1 or (fn["probability"] == 0 and self.query.cleanProbability()):
+				e.cleanProbability()
 
 			if fn["nodificationMode"] == True: #ASK
 				graphMode = self.query.exportLinkType() 

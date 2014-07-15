@@ -1505,7 +1505,7 @@ class Export(object):
 			"d3js-matrix" : {
 				"probability": 0,
 				"nodification": 1,
-				"nodificationMode" : True,
+				"nodificationMode" : "lemma",
 				"function" : self.D3JSMatrix
 			},
 			"corpus" : {
@@ -3016,6 +3016,11 @@ class Query(object):
 
 		return True
 
+	def nodification(self):
+		if self.yn("Do you want to nodify ?") == "y":
+			return True
+		return False
+
 	def welcome(self):
 		self.deco()
 		print "\t\tWelcome to Clotho"
@@ -3242,10 +3247,10 @@ class Query(object):
 			self.inputError(s)
 			return self.databaseMode(modes, deco = False)
 
-	def D3JS(self, q, e):
-		cluster = q.clustering()
-		threshold =q.thresholdOne()
-		e.D3JSMatrix(threshold = threshold, cluster = cluster)
+	def D3JS(self):
+		cluster = self.clustering()
+		threshold =self.thresholdOne()
+		self.export.D3JSMatrix(threshold = threshold, cluster = cluster)
 		filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/D3JS/index.html"
 		try:
 			import webbrowser
