@@ -264,6 +264,8 @@ class Clotho(object):
 			else:
 				graphMode = fn["nodificationMode"]
 
+			e.mode = graphMode
+
 			if graphMode == "lemma":
 				e.lemma(terms = self.query.q["terms"])
 
@@ -271,7 +273,7 @@ class Clotho(object):
 			fn["function"]()
 			print "Export Done"
 
-
+			"""
 			if exportMean == "semantic-matrix":
 				# It is needed for Export.semanticMatrix() to have lemma-lemma links 
 				e.semanticMatrix(terms = self.query.q["terms"])
@@ -285,6 +287,7 @@ class Clotho(object):
 
 			elif exportMean == "corpus":
 				e.corpus(data = self.terms)
+			"""
 
 C = Clotho()
 

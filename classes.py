@@ -1386,6 +1386,60 @@ class Corpus(object):
 		self.w(outputDictionary)
 		return True
 
+	def LDA(self, data = False):
+		"""
+			Return a raw corpus / term where only the n-words left AND right are kept from the sentence.
+
+			Params
+			window (Int) - N window
+		"""
+		if not data:
+			data = self.data
+		outputDictionary = {}
+
+		#We merge everything in one sentence
+		for term in data:
+			outputDictionary[term] = []
+			sentence = []
+			sentence_text = ""
+			for word in data[term]:
+				lemma = []
+				if sentence_text != word[3]:
+					#Writing time
+					if len(sentence) > 0:
+						sentence = self.LDASequence(sentence, word[2])
+						outputDictionary[term].append(sentence)
+					#Creating the new sentence array
+					sentence_text = word[3]
+					sentence = []
+					print sentence_text
+
+				for w in word[1]:
+					lemma.append(w[0])
+				if len(lemma) > 0:
+					sentence.append(lemma)
+
+		if len(sentence) > 0:
+			sentence = self.LDASequence(sentence, word[2])
+			outputDictionary[term].append(sentence)
+
+		self.w(outputDictionary)
+		return True
+
+	def urlify(self, s):
+		# Remove all non-word characters (everything except numbers and letters)
+		s = re.sub(r"[^\w\s]", '', s)
+		# Replace all runs of whitespace with a single dash
+		s = re.sub(r"\s+", '-', s)
+
+		return s
+
+	def LDASequence(self, sentence, author):
+		author = self.urlify(author)
+		sentence = [author + "\t", author + "\t"] + sentence
+		return sentence
+
+
 	def windowSentence(self, term = "", sentence = [], window = 0):
 		if len(sentence) <= 0:
 			return sentence
@@ -1423,6 +1477,7 @@ class Export(object):
 		self.results = SQL(cache = True, web = False)
 		self.cache = {"lemma" : {}, "sentence" : {}, "form": {}}
 		self.query = QueryObject
+		self.mode = "lemma"
 
 		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix", "tfidf-distance", "semantic-gephi", "corpus"]
 		self.options = {
@@ -1430,13 +1485,25 @@ class Export(object):
 				"probability" : 0, # = Ask Question // -1 Never 1// Always
 				"nodification" : 1,
 				"nodificationMode" : True, #Or Sentence or Lemma
-				"function" : self.query.gephi
+				"function" : self.gephi
 			},
 			"clotho-web": {
-				"probability": 0;
+				"probability": 0,
 				"nodification": 1,
 				"nodificationMode" : True,
 				"function" : self.ClothoWeb
+			},
+			"d3js-matrix" : {
+				"probability": 0,
+				"nodification": 1,
+				"nodificationMode" : True,
+				"function" : self.D3JS
+			},
+			"corpus" : {
+				"probability": 0,
+				"nodification": 1,
+				"nodificationMode" : False,
+				"function" : self.corpus
 			}
 		}
 		###Load treetagger if possible
@@ -1802,8 +1869,17 @@ class Export(object):
 
 	def corpus(self, data = {}):
 		""" Generation of plain-text corpus by term """
+		if len(data) == 0:
+			data = self.terms
 		C = Corpus(data)
 		C.rawCorpus()
+
+	def jsLDA(self, data = {}):
+		""" Generation of plain-text corpus by term """
+		if len(data) == 0:
+			data = self.terms
+		C = Corpus(data)
+		C.LDA()
 
 	def fourWords(self, data = {}):
 		""" Generation of plain-text corpus by term """
@@ -3146,7 +3222,7 @@ class Query(object):
 			self.inputError(s)
 			return self.databaseMode(modes, deco = False)
 
-	def gephi(self, q, e):
+	def D3JS(self, q, e):
 		cluster = q.clustering()
 		threshold =q.thresholdOne()
 		e.D3JSMatrix(threshold = threshold, cluster = cluster)
