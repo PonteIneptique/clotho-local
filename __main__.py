@@ -246,7 +246,7 @@ class Clotho(object):
 		#Should depend on type of export...
 		while self.query.exportResults():
 			e = Export(self.query.q, self.query)
-			exportMean = self.query.exportMean()
+			exportMean = self.query.exportMean(e)
 			e.terms = self.terms
 
 			fn = e.options[exportMean]

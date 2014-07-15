@@ -73,22 +73,23 @@ clothoFolder = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__f
 
 class SQL(object):
 	def __init__(self, results = False, cache = False, web = False):
+		self.debug = False
+		if results == True:
+			self.con  = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_results', charset='utf8');
+		elif cache == True:
+			self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache', charset='utf8');
+		elif web == True:
+			self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_web', charset='utf8');
+		else:
+			self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'perseus2', charset='utf8');
+
+		if self.debug:
+			cur = self.con.cursor()
+			cur.execute("SELECT VERSION()")
+			v = cur.fetchone()
+
 		try:
-			self.debug = False
-			if results == True:
-				self.con  = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_results', charset='utf8');
-			elif cache == True:
-				self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache', charset='utf8');
-			elif web == True:
-				self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_web', charset='utf8');
-			else:
-				self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'perseus2', charset='utf8');
-
-			if self.debug:
-				cur = self.con.cursor()
-				cur.execute("SELECT VERSION()")
-				v = cur.fetchone()
-
+			t = True
 		except:
 			print "Not connected to DB"
 			sys.exit()
@@ -1412,7 +1413,6 @@ class Corpus(object):
 					#Creating the new sentence array
 					sentence_text = word[3]
 					sentence = []
-					print sentence_text
 
 				for w in word[1]:
 					lemma.append(w[0])
@@ -1421,6 +1421,7 @@ class Corpus(object):
 
 		if len(sentence) > 0:
 			sentence = self.LDASequence(sentence, word[2])
+			print sentence
 			outputDictionary[term].append(sentence)
 
 		self.w(outputDictionary)
@@ -1436,8 +1437,14 @@ class Corpus(object):
 
 	def LDASequence(self, sentence, author):
 		author = self.urlify(author)
-		sentence = [author + "\t", author + "\t"] + sentence
-		return sentence
+		s = [[author + "\t"], [author + "\t"]]
+		s = s + sentence
+		q = []
+		for l in s:
+			for i in l:
+				q.append(i)
+
+		return q
 
 
 	def windowSentence(self, term = "", sentence = [], window = 0):
@@ -1476,10 +1483,12 @@ class Export(object):
 		self.perseus = SQL()
 		self.results = SQL(cache = True, web = False)
 		self.cache = {"lemma" : {}, "sentence" : {}, "form": {}}
-		self.query = QueryObject
 		self.mode = "lemma"
 
 		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix", "tfidf-distance", "semantic-gephi", "corpus"]
+		if not QueryObject:
+			QueryObject = Query()
+		self.query = QueryObject
 		self.options = {
 			"gephi" : {
 				"probability" : 0, # = Ask Question // -1 Never 1// Always
@@ -1497,13 +1506,19 @@ class Export(object):
 				"probability": 0,
 				"nodification": 1,
 				"nodificationMode" : True,
-				"function" : self.D3JS
+				"function" : self.D3JSMatrix
 			},
 			"corpus" : {
 				"probability": 0,
 				"nodification": 1,
 				"nodificationMode" : False,
 				"function" : self.corpus
+			},
+			"jsLDA" : {
+				"probability": 0,
+				"nodification": 1,
+				"nodificationMode" : False,
+				"function" : self.jsLDA
 			}
 		}
 		###Load treetagger if possible
@@ -2925,7 +2940,7 @@ class Term(object):
 
 class Query(object):
 	
-	def __init__(self):
+	def __init__(self, e = False):
 		self.q = {
 			"name" : "",
 			"terms" : [],
@@ -2934,8 +2949,10 @@ class Query(object):
 		self.dateRegexp = re.compile("(-?[0-9]+|\?)\;(-?[0-9]+|\?)")
 		self.sql =SQL()
 		self.exportLemma = ["semantic-matrix", "tfidf-distance", "semantic-gephi"]
-		self.export = Export()
-		self.availableMeans = self.export.options
+
+	def defineExport(self, e):
+		self.export = e
+		self.means = self.export.options
 
 	def setupExplanation(self):
 		print """
@@ -3148,8 +3165,10 @@ class Query(object):
 			return "sentence"
 
 
-	def exportMean(self, deco = True):
-		availableMeans = self.means
+	def exportMean(self, e = False, deco = False):
+		if e:
+			self.export = e
+			availableMeans = self.export.options
 		if deco:
 			self.deco()
 
@@ -3159,14 +3178,15 @@ class Query(object):
 			means.append(mean)
 			i += 1
 
-		s = self.ootions("Which mean of export do you want to use ? ", means).lower()
+		s = self.options("Which mean of export do you want to use ? ", means)
+		print s
 		if s in availableMeans:
 			return s
 		elif  s.isdigit() and int(s) < len(availableMeans):
 			return availableMeans[int(s)]
 		else:
 			self.inputError(s)
-			return self.modeGephi(deco = False)
+			return self.exportMean(e, deco)
 
 	def cleanProbability(self, deco = True):
 		if deco:
@@ -3174,9 +3194,9 @@ class Query(object):
 
 		s = self.yn("Clean based on probability ?")
 		if s == "y":
-			return "lemma"
+			return True
 		else:
-			return "sentence"
+			return False
 
 
 	def thresholdOne(self, deco = True):
