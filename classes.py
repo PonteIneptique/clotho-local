@@ -1416,13 +1416,29 @@ class Corpus(object):
 		return s
 
 class Export(object):
-	def __init__(self, q = False):
+	def __init__(self, q = False, QueryObject = False):
 		self.q = q
 		self.c = Cache()
 		self.perseus = SQL()
 		self.results = SQL(cache = True, web = False)
 		self.cache = {"lemma" : {}, "sentence" : {}, "form": {}}
+		self.query = QueryObject
 
+		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix", "tfidf-distance", "semantic-gephi", "corpus"]
+		self.options = {
+			"gephi" : {
+				"probability" : 0, # = Ask Question // -1 Never 1// Always
+				"nodification" : 1,
+				"nodificationMode" : True, #Or Sentence or Lemma
+				"function" : self.query.gephi
+			},
+			"clotho-web": {
+				"probability": 0;
+				"nodification": 1,
+				"nodificationMode" : True,
+				"function" : self.ClothoWeb
+			}
+		}
 		###Load treetagger if possible
 		try:
 			self.tt = TreeTagger(encoding='latin-1',language='latin')
@@ -1753,7 +1769,10 @@ class Export(object):
 
 
 	def ClothoWeb(self, terms = [], query = []):
-
+		if len(terms) == 0:
+			terms = self.terms
+		if len(query) == 0:
+			terms = self.query.q["terms"]
 		C = Clotho(terms)
 		C.save()
 		return True
@@ -2839,7 +2858,8 @@ class Query(object):
 		self.dateRegexp = re.compile("(-?[0-9]+|\?)\;(-?[0-9]+|\?)")
 		self.sql =SQL()
 		self.exportLemma = ["semantic-matrix", "tfidf-distance", "semantic-gephi"]
-
+		self.export = Export()
+		self.availableMeans = self.export.options
 
 	def setupExplanation(self):
 		print """
@@ -3053,17 +3073,17 @@ class Query(object):
 
 
 	def exportMean(self, deco = True):
-		availableMeans = ["gephi", "d3js-matrix", "mysql", "semantic-matrix", "tfidf-distance", "semantic-gephi", "corpus"]
+		availableMeans = self.means
 		if deco:
 			self.deco()
 
 		means = []
 		i = 0
 		for mean in availableMeans:
-			means.append( mean + " (" + str( i ) + ") " )
+			means.append(mean)
 			i += 1
 
-		s = raw_input("Which mean of export do you want to use ? " + " / ".join(means) + " \n - ").lower()
+		s = self.ootions("Which mean of export do you want to use ? ", means).lower()
 		if s in availableMeans:
 			return s
 		elif  s.isdigit() and int(s) < len(availableMeans):
@@ -3125,6 +3145,17 @@ class Query(object):
 		else:
 			self.inputError(s)
 			return self.databaseMode(modes, deco = False)
+
+	def gephi(self, q, e):
+		cluster = q.clustering()
+		threshold =q.thresholdOne()
+		e.D3JSMatrix(threshold = threshold, cluster = cluster)
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/D3JS/index.html"
+		try:
+			import webbrowser
+			webbrowser.open("file://"+filepath,new=2)
+		except:
+			print "File available at " + filepath
 
 
 class PyLucene(object):

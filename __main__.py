@@ -244,46 +244,35 @@ class Clotho(object):
 
 	def exportation(self):
 		#Should depend on type of export...
-		e = Export(self.query.q)
-		e.nodification()
 		while self.query.exportResults():
-			print "Nodification done"
-
+			e = Export(self.query.q, self.query)
 			exportMean = self.query.exportMean()
+			e.terms = self.terms
+
+			fn = e.options[exportMean]
+
+			if fn["probability"] == 1 or (fn["probability"] == 0 and self.query.cleanProbability()):
+				e.cleanProbability()
+
+			if fn["nodification"] == 1 or(fn["nodification"] == 0 and self.query.nodification()):
+				e.nodification()
+
+			if fn["nodificationMode"] == True: #ASK
+				graphMode = self.query.exportLinkType() 
+			elif fn["nodificationMode"] == False: #NEVER
+				graphMode = False
+			else:
+				graphMode = fn["nodificationMode"]
+
+			if graphMode == "lemma":
+				e.lemma(terms = self.query.q["terms"])
 
 
-			if exportMean != "mysql":
-				if self.query.cleanProbability():
-					e.cleanProbability();
+			fn["function"]()
+			print "Export Done"
 
-				if exportMean  not in self.query.exportLemma:
-					gephiMode = "sentence"
-					if self.query.exportLinkType() == "lemma":
-						gephiMode = "lemma"
-						e.lemma(terms = self.query.q["terms"])
-				else:
-					e.lemma(terms = self.query.q["terms"])
-				
-			if exportMean == "gephi":
-				e.gephi(gephiMode)
-				print "Export Done"
 
-			elif exportMean == "mysql":
-				e.ClothoWeb(terms = self.terms, query = self.query.q["terms"])
-				print "SQL export done"
-
-			elif exportMean == "d3js-matrix":
-				cluster = self.query.clustering()
-				threshold =self.query.thresholdOne()
-				e.D3JSMatrix(threshold = threshold, cluster = cluster)
-				filepath = os.path.dirname(os.path.abspath(__file__)) + "/data/D3JS/index.html"
-				try:
-					import webbrowser
-					webbrowser.open("file://"+filepath,new=2)
-				except:
-					print "File available at " + filepath
-
-			elif exportMean == "semantic-matrix":
+			if exportMean == "semantic-matrix":
 				# It is needed for Export.semanticMatrix() to have lemma-lemma links 
 				e.semanticMatrix(terms = self.query.q["terms"])
 
