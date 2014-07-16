@@ -558,7 +558,8 @@ class Cache(object):
 			"definition" : clothoFolder + "cache/definition/",
 			"triples" : clothoFolder + "cache/triples/",
 			"nodes" : clothoFolder + "cache/nodes/",
-			"queries" : clothoFolder + "cache/queries/"
+			"queries" : clothoFolder + "cache/queries/",
+			"results" : clothoFolder + "cache/results/"
 		}
 	def tUoB(self, obj, encoding='utf-8'):
 		if isinstance(obj, basestring):
@@ -573,10 +574,7 @@ class Cache(object):
 		sentence --- A string by default in mode sentence or a dictionary in mode search
 		mode --- Type of hash to retrieve (default = sentence)
 		"""
-		if mode in ["search", "nodes", "triples"]:
-			sentence = " ".join([term for term in sentence["terms"]]) + " " + sentence["name"] + " " + sentence["mode"]
-
-		sentence = hashlib.md5(sentence.encode("utf-8")).hexdigest()
+		sentence = hashlib.md5(str(sentence).encode("utf-8")).hexdigest()
 		return sentence
 
 	def filename(self, sentence, mode = "sentence"):
@@ -626,6 +624,9 @@ class Cache(object):
 				f.close()
 				return True	
 			return False
+
+	def results(self, queryName, data = False, check = False):
+		return self.cache(queryName, "results", data, check)
 
 	def triples(self, url, data = False, check = False):
 		return self.cache(url, "triples", data, check)
@@ -1053,7 +1054,7 @@ class Text(object):
 
 		if cached:
 			#Loading Id of this sentence
-			S = self.r.sentence(sentence)
+			S = self.r.sentence(sentence)	#CACHE SENTENCE
 			#Loading data
 			tempData = self.r.load(S)
 			data = []
@@ -1067,7 +1068,7 @@ class Text(object):
 				safe = False
 		else:
 			#Registering sentence
-			S = self.r.sentence(sentence)
+			S = self.r.sentence(sentence) #CACHE SENTENCE
 			#Cleaning sentence
 			sentence = sentence.strip()
 			for dot in self.dots:
@@ -1118,133 +1119,66 @@ class Text(object):
 
 class Results(object):
 	def __init__(self, cache = False, web = False):
-		self.s = SQL(cache = cache, web = web)
-		self.con = self.s.con
 		self.saved = {"lemma" : {}, "sentence" : {}, "form": {}}
 
-	def db(self):
-		with self.con:
-			cur = self.con.cursor()
-			cur.execute("SELECT DATABASE()")
-			return cur.fetchall()
+		self.sentences = []
+		self.forms = []
+		self.lemmas = [None]
+		self.texts = []
+		self.relationships = []
+		self.types = [None]
+
+	def reunite(self):
+		self.saved = {
+			"sentences" : self.sentences,
+			"forms" : self.forms,
+			"lemmas" : self.lemmas,
+			"texts" : self.texts,
+			"relationships" : self.relationships,
+			"types" : self.types
+		}
 
 	def lemma(self, lemma):
-		if lemma[0] in self.saved["lemma"]:
-			return self.saved["lemma"][lemma[0]]
+		if lemma[0] in self.lemmas:
+			return self.lemmas.index(lemma[0])
 		else:
-			with self.con:
-				cur = self.con.cursor()
-				cur.execute("SELECT id_lemma FROM lemma WHERE text_lemma = %s LIMIT 1", [lemma[0]])
-				d = cur.fetchone()
-
-				if d != None:
-					if len(d) == 1:
-						return d[0]
-				else:
-					cur.execute("INSERT INTO lemma (text_lemma, type_lemma) VALUES (%s, %s)", [lemma[0],lemma[1]])
-					r = self.con.insert_id()
-					self.saved["lemma"][lemma[0]] = r
-					return r
+			self.lemmas.append(lemma[0])
+			self.types.append(lemma[1])
+			return self.lemmas.index(lemma[0])
 
 	def form(self, form):
-		if form in self.saved["form"]:
-			return self.saved["form"][form]
+		if form in self.forms:
+			return self.forms.index(form)
 		else:
-			with self.con:
-				cur = self.con.cursor()
-				cur.execute("SELECT id_form  FROM form WHERE text_form = %s",[form])
-				d = cur.fetchone()
+			self.forms.append(form)
+			return self.forms.index(form)
 
-				if d != None:
-					if len(d) == 1:
-						return d[0]
-				else:
-					cur.execute("INSERT INTO form (text_form) VALUES (%s)", [form])
-					r = self.con.insert_id()
-					self.saved["form"][form] = r
-					return r
+	def text(self, text):
+		if text in self.texts:
+			return self.texts.index(text)
+		else:
+			self.texts.append(text)
+			return self.texts.index(text)
+
 
 	def sentence(self, sentence, text = False, boolean = False):
-		if sentence in self.saved["sentence"]:
-			if boolean:
-				return True
-			else:
-				return self.saved["sentence"][sentence]
+		b = False
+		if sentence in self.sentences:
+			b = self.sentences.index(sentence)
 		else:
-			with self.con:
-				cur = self.con.cursor()
-				if text:
-					cur.execute("SELECT id_sentence FROM sentence WHERE text_sentence = %s AND id_document = %s LIMIT 1", [sentence, text])
-				else:
-					cur.execute("SELECT id_sentence FROM sentence WHERE text_sentence = %s LIMIT 1", [sentence])
+			self.sentences.append(sentence)
+			b = self.sentences.index(sentence)
 
-				d = cur.fetchone()
+		if boolean:
+			if b:
+				return True
+			return False
+		return bin
 
-				if d != None:
-					if len(d) == 1:
-						if boolean:
-							return True
-						else:
-							return d[0]
-				else:
-					if boolean:
-						return False
-					else:
-						if text:
-							cur.execute("INSERT INTO sentence (text_sentence, id_document) VALUES ( %s, %s )", [sentence, text])
-						else:
-							cur.execute("INSERT INTO sentence (text_sentence) VALUES ( %s )", [sentence])
+	def relationship(self, sentence, form, lemma, text = False):
+		self.relationships.append([form, lemma, text, sentence])
 
-						r = self.con.insert_id()
-
-						self.saved["sentence"][sentence] = r
-						return r
-
-	def load(self, sentence):
-		with self.con:
-			d = {}
-			cur = self.con.cursor()
-			cur.execute("SELECT f.text_form, l.text_lemma, l.type_lemma FROM lemma_has_form lf, form f, lemma l WHERE l.id_lemma = lf.id_lemma AND f.id_form = lf.id_form AND lf.id_sentence = %s", [sentence])
-			rows = cur.fetchall()
-
-			for row in rows:
-				if row[0] not in d:
-					d[row[0]] = []
-				d[row[0]].append([row[1], row[2]])
-
-			return [[form, d[form]] for form in d]
-
-	def clean(self):
-		"""
-			Clean the table or create them
-
-		"""
-		operations = [
-			'CREATE TABLE IF NOT EXISTS form (    id_form int(11) NOT NULL AUTO_INCREMENT,    text_form varchar(255) DEFAULT NULL,    PRIMARY KEY (id_form))  ENGINE=InnoDB DEFAULT CHARSET=utf8;'
-			'CREATE TABLE IF NOT EXISTS lemma (    id_lemma int(11) NOT NULL AUTO_INCREMENT,    text_lemma varchar(255) DEFAULT NULL,    type_lemma varchar(45) DEFAULT NULL,    PRIMARY KEY (id_lemma))  ENGINE=InnoDB DEFAULT CHARSET=utf8;',
-			'CREATE TABLE IF NOT EXISTS lemma_has_form (    id_lemma int(11) NOT NULL,    id_form int(11) NOT NULL,    id_sentence int(11) DEFAULT NULL,    KEY lhf_lemma (id_lemma),    KEY lhf_form (id_form),    KEY lhf_sentence (id_sentence))  ENGINE=InnoDB DEFAULT CHARSET=utf8;',
-			'CREATE TABLE IF NOT EXISTS sentence (    id_sentence int(11) NOT NULL AUTO_INCREMENT,    text_sentence text,    id_document varchar(255) DEFAULT NULL,    PRIMARY KEY (id_sentence))  ENGINE=InnoDB DEFAULT CHARSET=utf8;',
-			'TRUNCATE TABLE form;',
-			'TRUNCATE TABLE lemma;',
-			'TRUNCATE TABLE sentence;',
-			'TRUNCATE TABLE lemma_has_form;'
-		]
-		with self.con:
-			for op in operations:
-				try:
-					cur = self.con.cursor()
-					cur.execute(op)
-					cur.close()
-				except:
-					log = op
-
-	def relationship(self, sentence, form, lemma):
-		with self.con:
-			cur = self.con.cursor()
-			cur.execute("INSERT INTO `lemma_has_form` (`id_lemma`,`id_form`,`id_sentence`)VALUES(%s, %s, %s)", [lemma,form,sentence])
-			return True
-
-	def save(self, rows):
+	def save(self, rows, query):
 		#
 		#	rows = [
 		#		[form, lemma, text, sentence]
@@ -1257,20 +1191,20 @@ class Results(object):
 				else:
 					id_document = row[2]
 
-				if len(row[1]) == 0:
-					s = self.sentence(row[3], text = id_document)
+				s = self.sentence(row[3])
+				f = self.form(row[0])
+				t = self.text(id_document)
+				if len(row[1]) == 0:	#No lemmatisation available
 					l = 0
-					f = self.form(row[0])
-
-					self.relationship(s,f,l)
+					self.relationship(s,f,l,t)
 				else:
 					for lemma in row[1]:
-
-						s = self.sentence(row[3], text = id_document)
 						l = self.lemma(lemma)
-						f = self.form(row[0])
+						self.relationship(l,f,s,t)
 
-						self.relationship(s,f,l)
+		sefl.reunite()
+		self.cache.results(query, self.saved)
+
 
 class Corpus(object):
 	def __init__(self, data = {}, flexed = False):
@@ -1550,50 +1484,40 @@ class Export(object):
 		edges = []
 		triples = [] # lemma, form, sentence
 		orphans = {"edges" : [], "nodes" : []}
-		with self.results.con:
-			cur = self.results.con.cursor()
-			cur.execute("SELECT * FROM lemma_has_form")
+		data = self.c.results(self.q)
 
-			rows = cur.fetchall()
-			for row in rows:
-				#Lemma, Form, Sentence
-				lem = "l"+str(row[0])
-				frm = "f"+str(row[1])
-				sen = "s"+str(row[2])
-				triples.append([lem, frm, sen])
-				#Lemma :
-				if row[0] not in self.cache["lemma"]:
-					cur.execute("SELECT text_lemma FROM lemma WHERE id_lemma = %s LIMIT 1", [row[0]])
-					lemma = cur.fetchone()
-					if lemma != None:
-						self.cache["lemma"][row[0]] = lemma[0]
-						nodes.append([lem, self.cache["lemma"][row[0]], "lemma", "Null"])
-					else:
-						self.cache["lemma"][row[0]] = None
+		for row in data["relationships"]:
+			#Lemma, Form, Sentence
+			lem = "l"+str(row[0])
+			frm = "f"+str(row[1])
+			sen = "s"+str(row[2])
+			triples.append([lem, frm, sen])
+			#Lemma :
+			if row[0] not in self.cache["lemma"]:
+				self.cache["lemma"][row[0]] = data["lemmas"][row[0]]
+				if data["lemmas"][row[0]] != None:
+					nodes.append([lem, self.cache["lemma"][row[0]], "lemma", "Null"])
 
-				#Sentence :
-				if row[2] not in self.cache["sentence"]:
-					cur.execute("SELECT text_sentence, id_document FROM sentence WHERE id_sentence = %s LIMIT 1", [row[2]])
-					sentence = cur.fetchone()
-					self.cache["sentence"][row[2]] = sentence
-					nodes.append([sen, self.cache["sentence"][row[2]], "sentence", sentence[1]])
+			#Sentence :
+			if row[2] not in self.cache["sentence"]:
+				#text / id
+				self.cache["sentence"][row[2]] = [data["sentences"][row[2]], data["texts"][row[3]]]
+				nodes.append([sen, self.cache["sentence"][row[2]], "sentence", data["texts"][row[3]]])
 
-				#Form :
-				if row[1] not in self.cache["form"]:
-					cur.execute("SELECT text_form FROM form WHERE id_form = %s LIMIT 1", [row[1]])
-					form = cur.fetchone()[0]
-					self.cache["form"][row[1]] = form
-					nodes.append([frm, self.cache["form"][row[1]], "form", "Null"])
+			#Form :
+			if row[1] not in self.cache["form"]:
+				self.cache["form"][row[1]] = data["forms"][row[1]]
+				nodes.append([frm, self.cache["form"][row[1]], "form", "Null"])
 
-				#We add two edges : lemma -> sentence; lemma -> form
-				#We presume that a vote has been made and only form = 1 lemma
+			#We add two edges : lemma -> sentence; lemma -> form
+			#We presume that a vote has been made and only form = 1 lemma
 
-				if self.cache["lemma"][row[0]] == None:
-					orphans["edges"].append([frm, sen])
-					orphans["nodes"].append([frm, self.cache["form"][row[1]]])
-				else:
-					edges.append([frm, sen, "form-sentence"])
-					edges.append([lem, frm, "lemma-form"])
+			if self.cache["lemma"][row[0]] == None:
+				orphans["edges"].append([frm, sen])
+				orphans["nodes"].append([frm, self.cache["form"][row[1]]])
+			else:
+				edges.append([frm, sen, "form-sentence"])
+				edges.append([lem, frm, "lemma-form"])
 
 		self.nodes = nodes
 		self.edges = edges

@@ -237,7 +237,7 @@ class Clotho(object):
 				self.results.clean()
 				print "Saving"
 				for term in self.terms:
-					self.results.save(self.terms[term])
+					self.results.save(self.terms[term], [term, self.query.q])
 		if self.exportOnGoing:
 			self.exportation()
 

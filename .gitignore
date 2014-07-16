@@ -10,3 +10,4 @@ applyMetadata.py
 progressbar/*
 *.png
 *.json
+*.zip
