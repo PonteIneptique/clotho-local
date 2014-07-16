@@ -15,6 +15,7 @@ import warnings
 import tarfile
 import wget
 import importlib
+import pickle
 
 #Warning
 warnings.filterwarnings("ignore", category = RuntimeWarning)
@@ -239,54 +240,6 @@ class SQL(object):
 
 		return data, len(rows)
 
-	def load(self, identifier = False):
-		""" Returns a list of saved Clotho request or returns one and set it as the actual request
-
-		keywords arguments
-		identifier -- (Default false) When set, returns the parameters of a given query
-		"""
-		cur = self.con.cursor()
-
-		if identifier == False:
-			cur.execute("SELECT * FROM `python_request`")
-			rows = cur.fetchall()
-			return list(rows), len(rows)
-		else:
-			q = {
-				"name" : "",
-				"terms" : [],
-				"mode" : ""
-			}
-			cur.execute("SELECT * FROM `python_request` WHERE id_request = ' " + str(identifier) + "' ")
-			d = list(cur.fetchall())
-			if len(d) == 1:
-				q["name"] = d[0][2]
-				q["mode"] = d[0][1].lower()
-
-				cur.execute("SELECT * FROM `python_request_term` WHERE id_request = ' " + str(identifier) + "' ")
-				d = list(cur.fetchall())
-				for t in d:
-					q["terms"].append(str(t[2]))
-
-			return q
-
-
-	def save(self, item):
-		""" Save a clotho request
-
-		keywords arguments
-		item -- A dictionary with three parameters : a list of terms, a mode and a name
-		"""
-		with self.con:
-			cur = self.con.cursor()
-			cur.execute("INSERT INTO `python_request` (`mode_request`,`name_request`) VALUES ('" + item["mode"] + "','" + item["name"] + "');")
-			
-			lastId = self.con.insert_id()
-
-			if lastId:
-				for term in item["terms"]:
-					cur.execute("INSERT INTO `python_request_term` (`id_request`,`lemma_request`) VALUES ('" + str(lastId) + "','" + str(term) + "')")
-
 class Initiate(object):
 	def __init__(self):
 		self.z = True
@@ -310,6 +263,9 @@ class Initiate(object):
 
 		if os.path.exists(clothoFolder + "cache/rdf") == False:
 			os.mkdir(clothoFolder + "cache/rdf")
+
+		if os.path.exists(clothoFolder + "cache/queries") == False:
+			os.mkdir(clothoFolder + "cache/queries")
 
 		if os.path.exists(clothoFolder + "cache/mysql") == False:
 			os.mkdir(clothoFolder + "cache/mysql")
@@ -601,7 +557,8 @@ class Cache(object):
 			"rdf" : clothoFolder + "cache/rdf/",
 			"definition" : clothoFolder + "cache/definition/",
 			"triples" : clothoFolder + "cache/triples/",
-			"nodes" : clothoFolder + "cache/nodes/"
+			"nodes" : clothoFolder + "cache/nodes/",
+			"queries" : clothoFolder + "cache/queries/"
 		}
 	def tUoB(self, obj, encoding='utf-8'):
 		if isinstance(obj, basestring):
@@ -632,7 +589,7 @@ class Cache(object):
 		if mode == "rdf":
 			return self.hash(sentence, mode = mode) + ".rdf"
 		else:
-			return self.hash(sentence, mode = mode) + ".json"
+			return self.hash(sentence, mode = mode) #+ ".json"
 
 
 	def cache(self, query, mode, data = False, check = False):
@@ -653,21 +610,22 @@ class Cache(object):
 						return filename
 					return True
 				else:
-					with codecs.open(filename, "r", "utf-8") as f:
-						d = json.load(f)
+					with open(filename, "rb") as f:
+						d = pickle.load(f)
 						f.close()
 						return d
 			return False
 		else:
-			with codecs.open(filename, "w", "utf-8") as f:
+			with open(filename, "wb") as f:
 				if hasattr(data , "read"):
-					d = f.write(data.read())
+					d = pickle.dump(data.read(), f)
 				elif hasattr(data , "text"):
-					d = f.write(data.text)
+					d = pickle.dump(data.text, f)
 				else:
-					d = f.write(json.dumps(data))
+					d = pickle.dump(data, f)
 				f.close()
-			return True	
+				return True	
+			return False
 
 	def triples(self, url, data = False, check = False):
 		return self.cache(url, "triples", data, check)
@@ -686,6 +644,9 @@ class Cache(object):
 
 	def definition(self, url, data = False, check = False):
 		return self.cache(url, "definition", data, check)
+
+	def query(self, data = False, check = False):
+		return self.cache("queries", "queries", data, check)
 
 	def sentence(self, sentence, data = False, check = False):
 		"""	Return a boolean given the functionnality asked: can either check if cache is available, retrieve or write cache
@@ -1091,7 +1052,6 @@ class Text(object):
 		#	cached = self.r.sentence(sentence, boolean = True)
 
 		if cached:
-			print cached
 			#Loading Id of this sentence
 			S = self.r.sentence(sentence)
 			#Loading data
@@ -1490,36 +1450,83 @@ class Export(object):
 			QueryObject = Query()
 		self.query = QueryObject
 		self.options = {
+
+			""" Specific formats exports """
+
 			"gephi" : {
 				"probability" : 0, # = Ask Question // -1 Never 1// Always
 				"nodification" : 1,
 				"nodificationMode" : True, #Or Sentence or Lemma
+				"details" : "Export the network to gephi",
 				"function" : self.gephi
 			},
+			"gephi-annotated" : {
+				"probability": 0,
+				"nodification": 1,
+				"nodificationMode" : "lemma",
+				"details" : "Export a network of available annotated exempla",
+				"function" : self.semanticGephi
+			},
+
+			""" Web exports """
+
 			"clotho-web": {
 				"probability": 0,
 				"nodification": 1,
 				"nodificationMode" : True,
+				"details" : "Export your corpus for further annotations on the web or your intranet (http://github.com/ponteineptique/clotho-web)",
 				"function" : self.ClothoWeb
 			},
 			"d3js-matrix" : {
 				"probability": 0,
 				"nodification": 1,
 				"nodificationMode" : "lemma",
+				"details" : "(Only small corpus for visibility) Create an html viz of the cooccurences matrix",
 				"function" : self.D3JSMatrix
 			},
+
+			""" Graph and computation exports """
+
+			"exempla-matrix" : {
+				"probability" : 0,
+				"nodification" : 1,
+				"nodificationMode" : "lemma",
+				"details" : "Produce a matrix with property available for every exempla and place to compute the properties and cluster through non-directly express informations",
+				"function" : self.semanticMatrix
+			},
+
+			"context-matrix" : {
+				"probability" : 0,
+				"nodification" : 1,
+				"nodificationMode" : "lemma",
+				"details" : "Compute and export a dendrogram of the clusterisation of euclidean_distance representing the context in which each query term is found",
+				"function" : self.tfidfDistance
+			},
+
+			""" Text Exports """
+
 			"corpus" : {
 				"probability": 0,
-				"nodification": 1,
+				"nodification": -1,
 				"nodificationMode" : False,
+				"details" : "Produce a file by query's term for R exploitation",
 				"function" : self.corpus
 			},
 			"jsLDA" : {
 				"probability": 0,
-				"nodification": 1,
+				"nodification": -1,
 				"nodificationMode" : False,
+				"details" : "Export data for the topic modeling tool jsLDA (http://github.com/mimno/jsLDA)",
 				"function" : self.jsLDA
-			}
+			},
+			"fourWords" : {
+				"probability" : 0,
+				"nodification" : -1,
+				"nodificationMode" : False,
+				"details" : "Exports text files but only four lemmas left and four lemmas right to your query's terms ",
+				"function" : self.fourWords
+			},
+
 		}
 		###Load treetagger if possible
 		try:
@@ -1861,6 +1868,8 @@ class Export(object):
 
 	def semanticMatrix(self, terms = [], query = []):
 		""" Semantic matrix """
+		if len(terms) == 0:
+			terms = self.query.terms
 
 		sm = SMa(nodes = self.nodes, edges = self.edges, terms = terms)
 		sm.dbpedia()
@@ -1871,12 +1880,20 @@ class Export(object):
 
 	def tfidfDistance(self, terms = [], query = []):
 		""" TF-IDF for all lemma """
+
+		if len(terms) == 0:
+			terms = self.query.terms
+
 		sm = TFIDF(nodes = self.nodes, edges = self.edges, terms = terms)
 		sm.matrixify()
 		sm.stats()
 		sm.tfidf()
 
 	def semanticGephi(self, terms = []):
+
+		if len(terms) == 0:
+			terms = self.query.terms
+
 		sm = SMa(nodes = self.nodes, edges = self.edges, terms = terms)
 		sm.dbpedia(definition = False)
 		sm.gephi()
@@ -1889,6 +1906,7 @@ class Export(object):
 		C = Corpus(data)
 		C.rawCorpus()
 
+
 	def jsLDA(self, data = {}):
 		""" Generation of plain-text corpus by term """
 		if len(data) == 0:
@@ -1898,6 +1916,8 @@ class Export(object):
 
 	def fourWords(self, data = {}):
 		""" Generation of plain-text corpus by term """
+		if len(data) == 0:
+			data = self.query.terms
 		C = Corpus(data)
 		C.windowCorpus(4)
 		
@@ -2809,8 +2829,6 @@ class TFIDF(object):
 				self.terms[node[0]] = node[1]
 				self.total[node[0]] = 0
 
-		print self.lemma
-
 	def matrixify(self):
 		m = []
 		#We get all terms
@@ -2846,8 +2864,6 @@ class TFIDF(object):
 
 	def stats(self):
 		labels = [self.terms[t] for t in self.terms if self.terms[t] != False]
-		print self.matrix
-		print self.terms
 		sums = [sum(m) for m in self.matrix]
 		for i, s in enumerate(sums):
 			print labels[i] + "\t" + str(s)
@@ -2948,11 +2964,26 @@ class Query(object):
 		}
 		self.dateRegexp = re.compile("(-?[0-9]+|\?)\;(-?[0-9]+|\?)")
 		self.sql =SQL()
+		self.cache = Cache()
 		self.exportLemma = ["semantic-matrix", "tfidf-distance", "semantic-gephi"]
 
 	def defineExport(self, e):
 		self.export = e
 		self.means = self.export.options
+
+	def cacheQuery(self, item):
+		""" Save a clotho request
+
+		keywords arguments
+		item -- A dictionary with three parameters : a list of terms, a mode and a name
+		"""
+		queries = self.cache.query()
+		if not queries:
+			queries = []
+		queries.append(item)
+		if self.cache.query(queries):
+			return True
+		return False
 
 	def setupExplanation(self):
 		print """
@@ -3087,20 +3118,24 @@ class Query(object):
 
 	def load(self):
 		self.deco()
-		print "Available queries"
-		available, l = self.sql.load()
+		available = self.cache.query()
+		l = len(available)
 		correctAnswers = []
 		if l == 0:
 			print "No saved request"
 			return False
 		else:
-			for item in available:
-				correctAnswers.append(item[0])
-				print "[" + str(item[0]) + "]\t " + item[2] + " (Mode : " + item[1] + ")"
-		
-		q = raw_input( "Which one do you want to load ? (Type the number) \n - ")
-		if q.isdigit() and int(q) in correctAnswers:
-			self.q = self.sql.load(q)
+			print "Available queries :"
+			i = 0
+			while i < len(available):
+				item = available[i]
+				print "[" + str(i) + "]\t " + item["name"] + " \n\t Mode : " + item["mode"] + "\n\t Lemmas :  " + ", ".join(item["terms"])
+				i += 1
+
+			q = raw_input( "Choice : ")
+
+		if q.isdigit() and int(q) < len(available) and int(q) >= 0:
+			self.q = available[int(q)]
 			return self.q
 		else:
 			print "Incorrect answer"
@@ -3114,7 +3149,7 @@ class Query(object):
 			self.deco()
 		s = self.yn("Do you want to save your request ?")
 		if s == "y":
-			if(self.sql.save(self.q)):
+			if self.cacheQuery(self.q):
 				print "Request saved"
 			else:
 				print "Error during save"
@@ -3184,7 +3219,6 @@ class Query(object):
 			i += 1
 
 		s = self.options("Which mean of export do you want to use ? ", means)
-		print s
 		if s in availableMeans:
 			return s
 		elif  s.isdigit() and int(s) < len(availableMeans):
