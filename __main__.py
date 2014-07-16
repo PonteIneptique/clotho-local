@@ -106,7 +106,6 @@ class Clotho(object):
 			f.close()
 
 	def processPerseus(self):
-		print self.query.q
 		if self.query.process():
 			mode = self.query.databaseMode(self.modes)
 			#PROCESS
