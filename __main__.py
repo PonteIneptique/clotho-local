@@ -15,10 +15,8 @@ class Clotho(object):
 	def __init__(self):
 		#Clotho Class opening
 		init = Initiate()
-		if init.check() == False:
-			if init.initiate() == False:
-				print "Unable to initiate the program. Check your rights on this folder."
-				sys.exit()
+		while init.check() == False:
+			init.setup()
 
 		#Import classes
 		self.query = Query()

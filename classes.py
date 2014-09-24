@@ -13,7 +13,6 @@ from math import log
 from pprint import pprint
 import warnings
 import tarfile
-import wget
 import importlib
 import pickle
 
@@ -21,6 +20,7 @@ import pickle
 warnings.filterwarnings("ignore", category = RuntimeWarning)
 
 #Python Libraries
+import wget
 from bs4 import BeautifulSoup
 import MySQLdb
 import numpy
@@ -75,25 +75,38 @@ clothoFolder = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__f
 class SQL(object):
 	def __init__(self, results = False, cache = False, web = False):
 		self.debug = False
-		if results == True:
-			self.con  = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_results', charset='utf8');
-		elif cache == True:
-			self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_cache', charset='utf8');
-		elif web == True:
-			self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'clotho_web', charset='utf8');
-		else:
-			self.con = MySQLdb.connect('localhost', 'perseus', 'perseus', 'perseus2', charset='utf8');
 
-		if self.debug:
-			cur = self.con.cursor()
-			cur.execute("SELECT VERSION()")
-			v = cur.fetchone()
+		"""
+		We need to load values from our config
+		"""
+		try:
+			#Config filename
+			filename = clothoFolder + "cache/setup.pickle"
+			with open(filename, "rb") as f:
+				self.conf = pickle.load(f)
+				f.close()
+		except:
+			print "No configuration for SQL"
+				
 
 		try:
-			t = True
+			if results == True:
+				self.con  = MySQLdb.connect('localhost', self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], self.conf["MySQL"]['database']['results'], charset='utf8');
+			elif cache == True:
+				self.con = MySQLdb.connect('localhost', self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], self.conf["MySQL"]['database']['cache'], charset='utf8');
+			elif web == True:
+				self.con = MySQLdb.connect('localhost', self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], self.conf["MySQL"]['database']['web'], charset='utf8');
+			else:
+				self.con = MySQLdb.connect('localhost', self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"],  self.conf["MySQL"]['database']['perseus'], charset='utf8');
+
+			if self.debug:
+				cur = self.con.cursor()
+				cur.execute("SELECT VERSION()")
+				v = cur.fetchone()
+			print "Connected"
 		except:
-			print "Not connected to DB"
-			sys.exit()
+			print "Not connected"
+			self.con = False
 
 
 
@@ -245,6 +258,8 @@ class Initiate(object):
 		self.z = True
 
 	def check(self):
+		if os.path.exists(clothoFolder + "cache") == False:
+			os.mkdir(clothoFolder + "cache")
 
 		if os.path.exists(clothoFolder + "cache/sentence") == False:
 			os.mkdir(clothoFolder + "cache/sentence")
@@ -285,11 +300,57 @@ class Initiate(object):
 		if os.path.exists(clothoFolder + "data/corpus") == False:
 			os.mkdir(clothoFolder + "data/corpus")
 
+		S = SQL()
+		print S
+		if S.con == False:
+			return False
+
 		M = Morph()
 		if M.check() == False:
-			M.install()
+			try:
+				M.install()
+			except:
+				return False
 
 		return True
+
+	def setup(self):
+		"""
+			Do the setup phase
+		"""
+		q = Query()
+		s = Setup()
+
+		q.welcome()
+		q.setupExplanation()
+		q.deco()
+		#Check dependecies
+		s.dependency()
+		q.deco()
+
+
+		#Check texts
+		s.sgml()
+		q.deco()
+
+		#Download dependency files before mysql
+		s.morph()
+		q.deco()
+
+		#First the database logons
+		s.conf["MySQL"]["identifiers"] = s.sqlId()
+		s.write()
+		q.deco()
+
+		#Then the databases' name
+		s.dbs()
+		s.write()
+		q.deco()
+
+		#Then the table
+		q.deco()
+		s.tables()
+		q.deco()
 
 class Setup(object):
 	def __init__(self):
@@ -362,6 +423,11 @@ class Setup(object):
 
 	def sgml(self):
 		"Print Checking texts"
+		path, filename = self.getPathAndFilename("texts", self.texts)
+
+		if os.path.exists(path):
+			print "Text already available"
+			return True
 		filename = self.download("texts", self.texts)
 		with tarfile.open(filename) as tar:
 			tar.extractall() # extract 
@@ -397,9 +463,30 @@ class Setup(object):
 
 		print "All dependencies are installed like a rolling stone."
 
+	def getPathAndFilename(self, mode, url):
+		""" Retrieve path and filename configuration for download and existence check
+		"""
+		if mode == "mysql":
+			path = clothoFolder + "cache/mysql/"
+			filename = self.tableName(url) + ".tar.gz"
+		elif mode == "morph":
+			path = clothoFolder + "morph/"
+			filename = "latin.morph.xml"
+		elif mode == "progressbar":
+			path = clothoFolder 
+			filename = "progressbar-2.3.tar.gz"
+		elif mode == "texts":
+			path = clothoFolder 
+			filename = "sgml.xml.texts.tar.gz"
+
+		return path, filename
+
 	def download(self, mode, url, optionalHeaders = False):
 		""" Download an item according to the type given
 		"""
+
+		path, filename = self.getPathAndFilename(mode, url)
+
 		if mode == "mysql":
 			path = clothoFolder + "cache/mysql/"
 			filename = self.tableName(url) + ".tar.gz"
@@ -442,9 +529,10 @@ class Setup(object):
 	def write(self):
 		"""	Overwrite the setup file for the application
 		"""
-		filename = clothoFolder + "cache/setup.json"
-		with codecs.open(filename, "w") as f:
-			d = f.write(json.dumps(self.conf))
+		filename = clothoFolder + "cache/setup.pickle"
+
+		with open(filename, "wb") as f:
+			d = pickle.dump(self.conf, f)
 			f.close()
 
 	def sqlId(self, o = False):
@@ -495,7 +583,7 @@ class Setup(object):
 	def tableExists(self, con, table):
 		with con:
 			cursor = con.cursor()
-			cursor.execute("SHOW TABLES LIKE %s", table)
+			cursor.execute("SHOW TABLES LIKE %s ", [table])
 			result = cursor.fetchone()
 			if result:
 				# there is a table named "tableName"
@@ -508,7 +596,12 @@ class Setup(object):
 		from subprocess import Popen, PIPE
 		return Popen('mysql %s -u%s -p%s' % (self.conf["MySQL"]["database"][db], self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"]), stdout=PIPE, stdin=PIPE, shell=True)
 
-	def tableCreate(self, filename, db = "perseus"):
+	def tableCreate(self, filename, db = "perseus", tablename = False):
+		if tablename:
+			with self.connection("perseus") as con:
+				cursor = con.cursor()
+				cursor.execute("CREATE TABLE")
+			return True
 		with tarfile.open(filename) as tar:
 			for element in tar: #There is normaly only one
 				tar.extract(element.name, os.path.dirname(filename))
@@ -542,6 +635,13 @@ class Setup(object):
 				print "\t-> Creating table"
 				self.tableCreate(f)
 				print "\t-> Done"
+
+		name = "morph"
+		print "Checking table " + name
+		if self.tableExists(self.perseus, name) == False:
+			print "\t-> Creating table"
+			self.tableCreate(name)
+			print "\t-> Done"
 
 	def morph(self):
 		print "Checking Latin Morph (From Perseus)"
@@ -727,6 +827,15 @@ class Morph(object):
 		#http://services.perseids.org/bsp/morphologyservice/analysis/word?word=vos&lang=lat&engine=morpheuslat
 
 	def check(self):
+		with self.s.con:
+			cur = self.s.con.cursor()
+			query = cur.execute("SHOW TABLES LIKE %s", ["morph"])
+			data = cur.fetchone()
+			if not data:
+				self.create
+				return False
+
+
 		with self.s.con:
 			cur = self.s.con.cursor()
 			query = cur.execute("SELECT COUNT(*) CNT FROM morph LIMIT 10")
