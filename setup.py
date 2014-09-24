@@ -1,38 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from classes import Query, Setup
+from setuptools import setup, find_packages
 
-q = Query()
-s = Setup()
-
-q.welcome()
-q.setupExplanation()
-q.deco()
-#Check dependecies
-s.dependency()
-q.deco()
+setup(
+	name = "Clotho",
+	version = "0.1.2",
+	install_requires = ["scikit-learn", "beautifulsoup4", "nltk", "requests", "wget", "rdflib", "wikipedia", "SPARQLWrapper", "MySQL-python", "numpy>=1.9", "scipy>=0.14", "matplotlib>=1.4"]
+)
 
 
-#Check texts
-s.sgml()
-q.deco()
-
-#Download dependency files before mysql
-s.morph()
-q.deco()
-
-#First the database logons
-s.conf["MySQL"]["identifiers"] = s.sqlId()
-s.write()
-q.deco()
-
-#Then the databases' name
-s.dbs()
-s.write()
-q.deco()
-
-#Then the table
-q.deco()
-s.tables()
-q.deco()
+"""
+packages = find_packages(),
+scripts = [],
+"""
