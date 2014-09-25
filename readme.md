@@ -21,13 +21,13 @@ If you don't have git : `sudo apt-get install git` and of course if you don't ha
 ```
 
 #Installing dependencies
-    As we use MySQL for some export, you'll need to install following package on Linux : `apt-get install build-essential python-dev libmysqlclient-dev`
+As we use MySQL for some export, you'll need to install following package on Linux : `apt-get install build-essential python-dev libmysqlclient-dev`
 
-    A graphical library, MatPlotLib, has issues with non-python dependencies, we recommend for Unix Users to do a `apt-get build-dep matplotlib`. You might have to activate Code Source Repository in Mint (In Software Sources)or add the Universe repository in Ubuntu for this command to run fine.
+A graphical library, MatPlotLib, has issues with non-python dependencies, we recommend for Unix Users to do a `apt-get build-dep matplotlib`. You might have to activate Code Source Repository in Mint (In Software Sources)or add the Universe repository in Ubuntu for this command to run fine.
 
-    The pip install for scipy seems to have difficulties, so please use `apt-get install python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose` if you are a Linux user (Debian/Ubuntu/Mint)
+The pip install for scipy seems to have difficulties, so please use `apt-get install python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose` if you are a Linux user (Debian/Ubuntu/Mint)
 
-	As for version 0.1.2, I introduced an install shortcut through pip. To use it, in a terminal press :
+As for version 0.1.2, I introduced an install shortcut through pip. To use it, in a terminal press :
 
 ```
 	cd ~/dev/clotho-local
