@@ -134,31 +134,6 @@ class SQL(object):
 
 		return self.results
 
-
-	def check(self):
-		"""	Return a boolean indicating if this programm tables are presents
-		"""
-		with self.con:
-			cur = self.con.cursor()
-			req = "SHOW TABLES LIKE 'python_request' "
-			cur.execute(req)
-			if len(cur.fetchall()) == 0:
-				return False
-			else:
-				return True
-
-	def saveMorph(self, morph):
-		""" Save a new morph
-
-		keywords arguments
-		morph -- a dictionary with a lemma key and a morph key
-		"""
-		with self.con:
-			cur = self.con.cursor()
-			req = "INSERT INTO `morph` (`lemma_morph`,`form_morph`) VALUES ('" + morph["lemma"] + "','" + morph["form"] + "');"
-			cur.execute(req)
-		self.con.commit()
-
 	def create(self):
 		""" Creates this software's MySQL tables
 		"""
@@ -170,7 +145,10 @@ class SQL(object):
 			cur.execute(pRequest)
 			cur.execute(pRequestTerm)
 			cur.execute(morph)
-
+	"""
+	def createTable(self):
+		with self.con:
+	"""
 
 	def lemma(self, query, numeric = False):
 		""" Return a dictionary where the key is a numeric identifier and the value is a list
@@ -301,16 +279,12 @@ class Initiate(object):
 			os.mkdir(clothoFolder + "data/corpus")
 
 		S = SQL()
-		print S
 		if S.con == False:
 			return False
 
-		M = Morph()
-		if M.check() == False:
-			try:
-				M.install()
-			except:
-				return False
+		S = Setup()
+		if S.check() == False:
+			self.setup()
 
 		return True
 
@@ -347,9 +321,12 @@ class Initiate(object):
 		s.write()
 		q.deco()
 
-		#Then the table
+		#Then the morph
+		s.
+
+		#Then the dumps
 		q.deco()
-		s.tables()
+		s.dumps()
 		q.deco()
 
 class Setup(object):
@@ -409,6 +386,19 @@ class Setup(object):
 
 		#Text files
 		self.texts = "http://www.perseus.tufts.edu/hopper/opensource/downloads/data/sgml.xml.texts.tar.gz"
+
+		""" SQL tables
+		"""
+		self.tables = {
+			"morph" : Table("morph", fields = [
+						Field("morph", "int", "11", "NOT NULL AUTO_INCREMENT"),
+						Field("lemma_morph", "varchar", "100", "CHARACTER SET utf8 DEFAULT NULL"),
+						Field("form_morph", "varchar", "100", "CHARACTER SET utf8 DEFAULT NULL")
+					])
+		}
+
+	def check(self):
+		return False
 
 	def dependencyType(self, dic):
 		cmd = []
@@ -596,7 +586,7 @@ class Setup(object):
 		from subprocess import Popen, PIPE
 		return Popen('mysql %s -u%s -p%s' % (self.conf["MySQL"]["database"][db], self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"]), stdout=PIPE, stdin=PIPE, shell=True)
 
-	def tableCreate(self, filename, db = "perseus", tablename = False):
+	def dumpCreate(self, filename, db = "perseus", tablename = False):
 		if tablename:
 			with self.connection("perseus") as con:
 				cursor = con.cursor()
@@ -619,7 +609,7 @@ class Setup(object):
 			cursor.execute(content)
 			"""
 
-	def tables(self):
+	def dumpDownload(self):
 		"""	Download tables if necessary
 		"""
 		#First we need to check if perseus is connected
@@ -633,19 +623,43 @@ class Setup(object):
 				print "\t-> Downloading file for " + table
 				f = self.download("mysql", self.perseusTables[table])
 				print "\t-> Creating table"
-				self.tableCreate(f)
+				self.dumpCreate(f)
 				print "\t-> Done"
 
-		name = "morph"
-		print "Checking table " + name
-		if self.tableExists(self.perseus, name) == False:
-			print "\t-> Creating table"
-			self.tableCreate(name)
-			print "\t-> Done"
 
 	def morph(self):
 		print "Checking Latin Morph (From Perseus)"
 		self.download("morph", self.morphfile)
+
+		table = self.tables["morph"]
+		table.setCon(self.perseus)
+		if not table.check():
+			print "Creating table " + table.name
+			table.create()
+		if table.empty():
+			self.morphFeed(table)
+
+	def morphFeed(self, morph = False):
+		data = {"lemma_morph" : "", "form_morph" : ""}
+		if morph:
+			morphTable = morph
+		else:
+			morphTable = self.tables["morph"]
+		if morphTable.check():
+			i = 0
+			for event, elem in xml.etree.cElementTree.iterparse(clothoFolder + "morph/latin.morph.xml"):
+				if elem.tag == "analysis":
+					for child in elem:
+						if child.tag == "lemma":
+							data["lemma_morph"] = child.text
+						elif child.tag == "form":
+							data["form_morph"] = child.text
+						print child.tag + " = " + child.text
+					try:
+						morphTable.insert(data)
+					except:
+						continue
+			print str(i) + " morph imported in database"
 
 class Cache(object):
 	def __init__(self):
@@ -847,23 +861,6 @@ class Morph(object):
 			else:
 				return False
 		return False
-
-	def install(self):
-		data = {"lemma" : "", "form" : ""}
-		i = 0
-		for event, elem in xml.etree.cElementTree.iterparse(clothoFolder + "morph/latin.morph.xml"):
-			if elem.tag == "analysis":
-				for child in elem:
-					if child.tag == "lemma":
-						data["lemma"] = child.text
-					elif child.tag == "form":
-						data["form"] = child.text
-					print child.tag + " = " + child.text
-				try:
-					self.s.saveMorph(data)
-				except:
-					continue
-		print str(i) + " morph imported in database"
 
 	def all(self,lemma):
 		with self.s.con:
@@ -2948,6 +2945,124 @@ class TFIDF(object):
 """
 	def pprint(self):
 		print self.semes
+
+class Field(object):
+	def __init__(self, name, sqltype, parameter = None, options = None):
+		if isinstance(name, basestring) and not isinstance(name, unicode):
+			name = unicode(name)
+		if isinstance(name, unicode):
+			self.name = name
+		else:
+			raise TypeError("Given name for the Field object is not a string")
+		if len(name) == 0:
+			raise ValueError("Field name is invalid")
+
+		if not isinstance(sqltype, basestring):
+			raise TypeError("Type is not a basestring")
+
+		if options and not isinstance(options, basestring):
+			raise TypeError("Options is not a basestring")
+
+		if parameter and not isinstance(parameter, basestring):
+			raise TypeError("parameter is not a basestring")
+
+	def toSql(self):
+		""" Transform a field into a CREATE readable string
+		"""
+		s = u"`" + self.name + u"` " + self.sqltype
+
+		if self.parameter:
+			s += u"(" + self.parameter + u")"
+
+		if self.options:
+			s += u" " + self.options
+
+		return s
+
+
+class Table(object):
+	def __init__(self, name, sql_conn = None, fields = [], keys = [], engine  = False, charset = False):
+
+		self.fields = []
+		self.name = ""
+		self.keys = []
+		self.engine = "InnoDB"
+		self.charset = "utf8"
+
+		if isinstance(name, basestring) and not isinstance(name, unicode):
+			name = unicode(name)
+		if isinstance(name, unicode):
+			self.name = name
+		else:
+			raise TypeError("Given name for the Table object is not a string")
+
+		if sql_conn:
+			try:
+				self.setCon()
+			except e:
+				print e
+
+		if isinstance(engine, basestring):
+			self.engine = engine
+		if isinstance(charset, basestring):
+			self.charset = charset
+
+		if not isinstance(fields, list):
+			raise TypeError("Given fields is not a list")
+		if len(fields) > 0:
+			self.setFields(fields)
+
+	def setCon(self, con):
+		if not isinstance(con, MySQLdb.connections.Connection):
+			raise TypeError("SQL Object is not a correct MySQLdb.connections.Connection instance")
+		else:
+			self.sql = con
+
+	def setFields(self, fields = []):
+		if not isinstance(fields, list):
+			raise TypeError("Given fields is not a list")
+		if len(fields) == 0:
+			raise ValueError("Given list of fields is empty")
+
+		for field in fields:
+			self.addField(field)
+
+	def addField(self,field):
+		if field.name in [f.name for f in self.fields]:
+			raise ValueError("A field with the name " + field.name + " already exists")
+		self.fields.append(field)
+
+
+	def check(self, forceCreate = False):
+		with self.sql:
+			cur = self.sql.cursor()
+			cur.execute("SHOW TABLES LIKE \"%s\" ", [self.name])
+			if len(cur.fetchall()) == 0:
+				if forceCreate:
+					return self.create()
+				return False
+			else:
+				return True
+
+	def create(self):
+		with self.sql:
+			cur = sql.sql.cursor()
+			fields = [f.toSql for f in self.fields]
+			fields += self.keys
+			cur.execute("CREATE TABLE `%s` (%s) ENGINE=%s DEFAULT CHARSET=%s", [self.name, ", ".join(fields), self.engine, self.charset])
+
+	def insert(self, data):
+		""" Save a new morph
+
+		keywords arguments
+		data -- a dictionary with given fields name
+		"""
+		fieldName = ", ".join([field for field in data])
+		fieldData = ", ".join([ '"' + data[field] + '"' for field in data])
+		with self.sql:
+			cur = self.sql.cursor()
+			cur.execute("INSERT INTO `%s` (%s) VALUES (%s)", [self.name, fieldName, fieldData])
+		self.con.commit()
 
 
 class Term(object):
