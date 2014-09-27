@@ -1,6 +1,6 @@
 texts/*
 cache/*
-data/*
+dataexport/*
 dependencies/*
 *.pyc
 classes/*.pyc
