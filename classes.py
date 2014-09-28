@@ -234,9 +234,9 @@ class Setup(object):
 		"""
 		self.tables = {
 			"morph" : Table("morph", fields = [
-						Field("morph", "int", "11", "NOT NULL AUTO_INCREMENT"),
-						Field("lemma_morph", "varchar", "100", "CHARACTER SET utf8 DEFAULT NULL"),
-						Field("form_morph", "varchar", "100", "CHARACTER SET utf8 DEFAULT NULL")
+						Field("morph", {"int" : "11"}, "NOT NULL AUTO_INCREMENT"),
+						Field("lemma_morph", {"varchar" : "100"}, "CHARACTER SET utf8 DEFAULT NULL"),
+						Field("form_morph", {"varchar" :"100"}, "CHARACTER SET utf8 DEFAULT NULL")
 					])
 		}
 

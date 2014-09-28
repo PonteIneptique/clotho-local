@@ -3,12 +3,14 @@ import MySQL
 
 Con = MySQL.Connection(path = "../")
 
-SchemeTable = Models.storage.Table("testing", [
-		Models.Field("id_test", {"int" : "11"}, "AUTO_INCREMENT"),
-		Models.Field("text_test", {"varchar" : "100"})
-	], ["PRIMARY KEY id_test"])
+SchemeTable = Models.storage.Table("morph", fields = [
+						Models.storage.Field("id_morph", {"int" : "11"}, "NOT NULL AUTO_INCREMENT"),
+						Models.storage.Field("lemma_morph", {"varchar" : "100"}, "CHARACTER SET utf8 DEFAULT NULL"),
+						Models.storage.Field("form_morph", {"varchar" :"100"}, "CHARACTER SET utf8 DEFAULT NULL")
+					], keys = [
+					"PRIMARY KEY (`id_morph`)"
+					])
 
-print SchemeTable.fields
-t = MySQL.Table(SchemeTable)
-print t
-print t.fields[0].toString()
+t = MySQL.Table(SchemeTable, Con)
+
+print t.check(True)

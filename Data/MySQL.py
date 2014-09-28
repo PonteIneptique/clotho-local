@@ -1,5 +1,6 @@
-"""
-"""
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import Models
 import MySQLdb
 import pickle
@@ -73,9 +74,11 @@ class SQLField(Models.storage.Field):
 		return s
 
 class Table(Models.storage.Table):
-	def __init__(self, table = None):
-		print isinstance(table, Models.storage.Table)
-		print table
+	def __init__(self, table = None, connection = None):
+		self.Table(table)
+		self.Connection(connection)
+
+	def Table(self, table):
 		if isinstance(table, Models.storage.Table):
 			self.fields = [SQLField(f) for f in table.fields]
 			self.name = table.name
@@ -83,16 +86,16 @@ class Table(Models.storage.Table):
 			self.engine = table.engine
 			self.charset = table.charset
 
-
-	def setCon(self, con):
-		if not isinstance(con, MySQLdb.connections.Connection):
-			raise TypeError("SQL Object is not a correct MySQLdb.connections.Connection instance")
+	def Connection(self, connection):
+		if not isinstance(connection, Connection):
+			raise TypeError("SQL Object is not a correct MySQL.Connection instance")
 		else:
-			self.sql = con
+			self.instance = connection
+			self.connection = self.instance.con
 
 	def check(self, forceCreate = False):
-		with self.sql:
-			cur = self.sql.cursor()
+		with self.connection:
+			cur = self.connection.cursor()
 			cur.execute("SHOW TABLES LIKE \"%s\" ", [self.name])
 			if len(cur.fetchall()) == 0:
 				if forceCreate:
@@ -102,11 +105,12 @@ class Table(Models.storage.Table):
 				return True
 
 	def create(self):
-		with self.sql:
-			cur = sql.sql.cursor()
-			fields = [f.toSql for f in self.fields]
+		with self.connection:
+			cur = self.connection.cursor()
+			fields = [f.toString() for f in self.fields]
 			fields += self.keys
-			cur.execute("CREATE TABLE `%s` (%s) ENGINE=%s DEFAULT CHARSET=%s", [self.name, ", ".join(fields), self.engine, self.charset])
+			print "CREATE TABLE `"+ self.name +"` ( " + ", ".join(fields) + ") ENGINE="+self.engine+" DEFAULT CHARSET=" + self.charset
+			cur.execute("CREATE TABLE `"+ self.name +"` ( " + ", ".join(fields) + ") ENGINE="+self.engine+" DEFAULT CHARSET=" + self.charset)
 
 	def insert(self, data):
 		""" Do a insert query
@@ -116,10 +120,10 @@ class Table(Models.storage.Table):
 		"""
 		fieldName = ", ".join([field for field in data])
 		fieldData = ", ".join([ '"' + data[field] + '"' for field in data])
-		with self.sql:
-			cur = self.sql.cursor()
+		with self.connection:
+			cur = self.connection.cursor()
 			cur.execute("INSERT INTO `%s` (%s) VALUES (%s)", [self.name, fieldName, fieldData])
-		self.con.commit()
+		self.connection.commit()
 
 
 	"""
