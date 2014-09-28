@@ -1,11 +1,17 @@
 """
 """
-from Models import *
+import Models
+import MySQLdb
+import pickle
+SQL_DATA_TYPE = ["int", "varchar", "text"]
 
-class SQL(object):
-	def __init__(self, alias = "perseus"):
+class Connection(object):
+	def __init__(self, alias = "perseus", path = None):
 		clothoFolder = "../../../"
+		if isinstance(path, basestring):
+			clothoFolder = path
 		self.debug = False
+		print clothoFolder
 
 		"""
 		We need to load values from our config
@@ -20,7 +26,12 @@ class SQL(object):
 			print "No configuration for SQL"
 
 		try:
-			self.con  = MySQLdb.connect('localhost', self.conf["MySQL"]["identifiers"]["user"], self.conf["MySQL"]["identifiers"]["password"], self.conf["MySQL"]['database'][alias], charset='utf8');
+			self.con  = MySQLdb.connect(
+				'localhost', 
+				self.conf["MySQL"]["identifiers"]["user"], 
+				self.conf["MySQL"]["identifiers"]["password"], 
+				self.conf["MySQL"]['database'][alias], 
+				charset='utf8');
 			print "Connected"
 		except:
 			print "Not connected"
@@ -36,28 +47,48 @@ class SQL(object):
 
 import copy
 
-class SQLField(Field):
-    def __new__(cls, F):
-        return F
+class SQLField(Models.storage.Field):
+	def __init__(self, field = None):
+		if isinstance(field, Models.storage.Field):
+			self.name = field.name
+			self.options = field.options
+			self.parameters = field.parameters
 
-	def __init__(self, field):
-		self = copy.deepcopy(field)
-		print self
-
-	def toSql(self):
+	def toString(self):
 		""" Transform a field into a CREATE readable string
 		"""
-		s = u"`" + self.name + u"` " + self.sqltype
+		s = u"`" + self.name + u"` "
 
-		if self.parameter:
-			s += u"(" + self.parameter + u")"
+		if self.parameters:
+			for p in self.parameters:
+				if p in SQL_DATA_TYPE:
+					if self.parameters[p]:
+						s += u"".join([" ", p, "(", self.parameters[p], ") "])
+					else:
+						s += u"".join([" ", p, " "])
 
 		if self.options:
 			s += u" " + self.options
 
 		return s
 
-class SQLTable(Table):
+class Table(Models.storage.Table):
+	def __init__(self, table = None):
+		print isinstance(table, Models.storage.Table)
+		print table
+		if isinstance(table, Models.storage.Table):
+			self.fields = [SQLField(f) for f in table.fields]
+			self.name = table.name
+			self.keys = table.keys
+			self.engine = table.engine
+			self.charset = table.charset
+
+
+	def setCon(self, con):
+		if not isinstance(con, MySQLdb.connections.Connection):
+			raise TypeError("SQL Object is not a correct MySQLdb.connections.Connection instance")
+		else:
+			self.sql = con
 
 	def check(self, forceCreate = False):
 		with self.sql:
@@ -78,7 +109,7 @@ class SQLTable(Table):
 			cur.execute("CREATE TABLE `%s` (%s) ENGINE=%s DEFAULT CHARSET=%s", [self.name, ", ".join(fields), self.engine, self.charset])
 
 	def insert(self, data):
-		""" Save a new morph
+		""" Do a insert query
 
 		keywords arguments
 		data -- a dictionary with given fields name

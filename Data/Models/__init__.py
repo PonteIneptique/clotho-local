@@ -1,5 +1,4 @@
-import re 
-
-from field import *
-from table import *
+from storage import *
 from term import *
+from lemma import *
+from document import *

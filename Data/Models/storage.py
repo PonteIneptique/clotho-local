@@ -1,13 +1,35 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from field import *
+class DataField:
+	pass
+
+class Field(DataField):
+	def __init__(self, name, parameters = None, options = None):
+		print name
+		if isinstance(name, basestring) and not isinstance(name, unicode):
+			name = unicode(name)
+		if isinstance(name, unicode):
+			self.name = name
+		else:
+			raise TypeError("Given name for the Field object is not a string")
+		if len(name) == 0:
+			raise ValueError("Field name is invalid")
+
+		if options and not isinstance(options, basestring):
+			raise TypeError("Options is not a basestring")
+
+		if parameters and not isinstance(parameters, dict):
+			raise TypeError("parameter is not a basestring")
+
+		self.options = options
+		self.parameters = parameters
 
 class DataTable:
 	pass
 
 class Table(DataTable):
-	def __init__(self, name, sql_conn = None, fields = [], keys = [], engine  = False, charset = False):
+	def __init__(self, name, fields = [], keys = [], engine  = False, charset = False):
 
 		self.fields = []
 		self.name = ""
@@ -22,12 +44,6 @@ class Table(DataTable):
 		else:
 			raise TypeError("Given name for the Table object is not a string")
 
-		if sql_conn:
-			try:
-				self.setCon()
-			except e:
-				print e
-
 		if isinstance(engine, basestring):
 			self.engine = engine
 		if isinstance(charset, basestring):
@@ -37,12 +53,6 @@ class Table(DataTable):
 			raise TypeError("Given fields is not a list")
 		if len(fields) > 0:
 			self.setFields(fields)
-
-	def setCon(self, con):
-		if not isinstance(con, MySQLdb.connections.Connection):
-			raise TypeError("SQL Object is not a correct MySQLdb.connections.Connection instance")
-		else:
-			self.sql = con
 
 	def setFields(self, fields = []):
 		if not isinstance(fields, list):
