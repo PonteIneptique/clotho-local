@@ -54,6 +54,20 @@ class Table(DataTable):
 		if len(fields) > 0:
 			self.setFields(fields)
 
+		if not isinstance(keys, list):
+			raise TypeError("Given fields is not a list")
+		if len(keys) > 0:
+			self.setKeys(keys)
+
+	def setKeys(self, keys = []):
+		if not isinstance(keys, list):
+			raise TypeError("Given keys is not a list")
+		if len(fields) == 0:
+			raise ValueError("Given list of keys is empty")
+
+		for field in fields:
+			self.addField(field)
+
 	def setFields(self, fields = []):
 		if not isinstance(fields, list):
 			raise TypeError("Given fields is not a list")
