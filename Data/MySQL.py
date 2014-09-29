@@ -99,7 +99,6 @@ class Table(Models.storage.Table):
 					raise TypeError("One of the condition is not a Models.storage.Condition instance")
 				req_where += " `{0}` {1} %s {2}".format(w.field, w.condition, w.next)
 			req += " WHERE " + req_where
-
 			return req
 		else:
 			return ""
