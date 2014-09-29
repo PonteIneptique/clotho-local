@@ -17,9 +17,17 @@ if CONSTANT_DATA_STORAGE == "MySQL":
 
 class Config(object):
 	def __init__(self):
-		pass
+		#"SELECT lemma_id, lemma_text, bare_headword, lemma_short_def FROM hib_lemmas WHERE lemma_text LIKE '" + query + "'"
+		self.dictionnary = Table(Models.storage.Table("hib_lemmas", [
+				Models.storage.Field("lemma_id", {"int" : "11"}),
+				Models.storage.Field("lemma_text", {"text" : None})
+			]))
+	def check(self):
+		self.dictionnary.check()
 
 class Lemma(lang.Lemma):
+	def __init__(self):
+		self.config = Config()
 	def search(self, w):
 		pass
 

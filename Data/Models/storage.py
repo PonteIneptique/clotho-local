@@ -17,7 +17,7 @@ class Field(object):
 			raise TypeError("Options is not a basestring")
 
 		if parameters and not isinstance(parameters, dict):
-			raise TypeError("parameter is not a basestring")
+			raise TypeError("parameter is not a dictionary")
 
 		self.options = options
 		self.parameters = parameters
