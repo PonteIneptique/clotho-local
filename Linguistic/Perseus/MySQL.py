@@ -70,11 +70,14 @@ class Lemma(lang.Lemma):
 	def remove(self, lemma):
 		if not(isinstance(lemma, Models.lang.Lemma)):
 			raise TypeError("Lemma is not an instance of Models.lang.Lemma")
-
-		return self.config.dictionnary.delete([
-				Models.storage.Condition("lemma_id", lemma.uid, "=", "AND"),
-				Models.storage.Condition("lemma_text", lemma.text, "=", "AND"),
-				Models.storage.Condition("lemma_short_def", lemma.definition, "=")
-			], limit = 100)
+		conditions = []
+		if lemma.uid:
+			conditions.append(Models.storage.Condition("lemma_id", lemma.uid, "=", "AND"))
+		if lemma.text:
+			conditions.append(Models.storage.Condition("lemma_text", lemma.text, "=", "AND"))
+		if lemma.definition:
+			conditions.append(Models.storage.Condition("lemma_short_def", lemma.definition, "="))
+			
+		return self.config.dictionnary.delete(conditions, limit = 100)
 
 

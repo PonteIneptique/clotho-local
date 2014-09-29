@@ -24,17 +24,20 @@ if len(original_lemmas) > 0:
 		l.remove(lemma)
 #######################################
 
-assert l.search("pedicare")[0].toString() == "pedicare", "No Pedicare form found"
+search = l.search("pedicar")
+
+assert len(search) == 0, "No Pedicare form found"
 
 test_lemma = Models.lang.Lemma(None, "pedicare", "Sodomiser")
 test_lemma.uid = l.new(test_lemma)
 
 assert isinstance(test_lemma.uid, long), "Inserting a new lemma and return a UID is false"
-assert l.remove(Models.lang.Lemma(None, "pedicare", "Sodomiser")), "Can't remove last lemma"
 
-assert len(l.search("pedicar")) == 1 and l.search("pedicar")[0].toString() == "pedicare", "No Pedicare form found"
+search = l.search("pedicar")
+assert (len(search) == 1 and search[0].toString() == "pedicare"), "No Pedicare form found"
 assert len(l.search("pedicar", strict = True)) == 0, "Strict search should not have found pedicar"
 
+assert l.remove(Models.lang.Lemma(None, "pedicare", "Sodomiser")), "Can't remove last lemma"
 
 #######################################
 #Just in case backing up
