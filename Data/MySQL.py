@@ -5,11 +5,13 @@ import Models
 import MySQLdb
 import MySQLdb.cursors 
 import pickle
+import os
+
 SQL_DATA_TYPE = ["int", "varchar", "text"]
 
 class Connection(object):
 	def __init__(self, alias = "perseus", path = None):
-		clothoFolder = "../../../"
+		clothoFolder = os.path.dirname(__file__) + "/../"
 		if isinstance(path, basestring):
 			clothoFolder = path
 		self.debug = False
@@ -24,6 +26,7 @@ class Connection(object):
 				self.conf = pickle.load(f)
 				f.close()
 		except:
+			raise ValueError("Given path {0} doesn't contain needed data".format(clothoFolder + "cache/setup.pickle") )
 			print "No configuration for SQL"
 
 		try:
@@ -152,12 +155,13 @@ class Table(Models.storage.Table):
 		with self.connection:
 			cur = self.connection.cursor()
 			req = "INSERT INTO `{0}` ({1}) ".format(self.name, fieldName)
+			cur.execute(req + " VALUES ({0})".format(" ,".join([" %s " for field in data])), [data[field] for field in data])
 			try:
-				cur.execute(req + " VALUES ({0})".format(" ,".join([" %s " for field in data])), [data[field] for field in data])
-				try:
-					return self.connection.insert_id()
-				except:
-					return True
+				return self.connection.insert_id()
+			except:
+				return True
+			try:
+				pass
 			except:
 				return False
 		self.connection.commit()
@@ -225,7 +229,7 @@ class Table(Models.storage.Table):
 
 		if len(where) > 0:
 			with self.connection:
-				cur = MySQLdb.cursors.DictCursor(self.connection)
+				cur = self.connection.cursor()
 				try:
 					cur.execute(self.ConditionsToWhere(req, where) + " LIMIT {0}".format(limit), [w.value for w in where])
 					return True

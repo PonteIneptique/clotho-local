@@ -20,6 +20,9 @@ class Form(object):
 
 class Lemma(object):
 	def __init__(self, uid = None, text = None, definition = None):
+		self.uid = None
+		self.text = None
+		self.definition = None
 		if isinstance(uid, basestring):
 			self.uid = uid
 		if isinstance(uid, int):

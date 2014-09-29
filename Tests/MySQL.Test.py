@@ -3,7 +3,7 @@ sys.path.append("..")
 from Data import Models
 from Data import MySQL
 
-Con = MySQL.Connection(path = "../")
+Con = MySQL.Connection()
 
 SchemeTable = Models.storage.Table("morph", fields = [
 						Models.storage.Field("id_morph", {"int" : "11"}, "NOT NULL AUTO_INCREMENT"),

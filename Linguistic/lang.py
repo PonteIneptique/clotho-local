@@ -10,3 +10,14 @@ class Lemma(object):
 
 		"""
 		raise NotImplementedError()
+
+	def new(self, lemma):
+		if not(isinstance(lemma, Models.lang.Lemma)):
+			raise TypeError("Lemma is not an instance of Models.lang.Lemma")
+		raise NotImplementedError()
+
+		
+	def remove(self, lemma):
+		if not(isinstance(lemma, Models.lang.Lemma)):
+			raise TypeError("Lemma is not an instance of Models.lang.Lemma")
+		raise NotImplementedError()
