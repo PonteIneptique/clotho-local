@@ -3,6 +3,7 @@
 
 import Models
 import MySQLdb
+import MySQLdb.cursors 
 import pickle
 SQL_DATA_TYPE = ["int", "varchar", "text"]
 
@@ -45,7 +46,7 @@ class Connection(object):
 
 import copy
 
-class SQLField(Models.storage.Field):
+class Field(Models.storage.Field):
 	def __init__(self, field = None):
 		if isinstance(field, Models.storage.Field):
 			self.name = field.name
@@ -77,7 +78,7 @@ class Table(Models.storage.Table):
 
 	def Table(self, table):
 		if isinstance(table, Models.storage.Table):
-			self.fields = [SQLField(f) for f in table.fields]
+			self.fields = [Field(f) for f in table.fields]
 			self.name = table.name
 			self.keys = table.keys
 			self.engine = table.engine
@@ -89,6 +90,19 @@ class Table(Models.storage.Table):
 		else:
 			self.instance = connection
 			self.connection = self.instance.con
+
+	def ConditionsToWhere(self, req, where = []):
+		if len(where) > 0:
+			req_where = ""
+			for w in where:
+				if not isinstance(w, Models.storage.Condition):
+					raise TypeError("One of the condition is not a Models.storage.Condition instance")
+				req_where += " `{0}` {1} %s {2}".format(w.field, w.condition, w.next)
+			req += " WHERE " + req_where
+
+			return req
+		else:
+			return ""
 
 	def check(self, forceCreate = False):
 		with self.connection:
@@ -160,6 +174,75 @@ class Table(Models.storage.Table):
 				return False
 
 		return False
+
+	def select(self, where = [], select = []):
+		"""	Where as to be designed this way :
+			[{
+				"field" : "",
+				"equality" : None or something in WHERE_ACCEPTED,
+				"value" : "",
+				"next" : None
+			}]
+		"""
+		if len(select) > 0:
+			req = "SELECT {0} FROM `{1}` ".format(",".join([str(s) for s in select]), self.name)
+		else:
+			req = "SELECT * FROM `{0}` ".format(self.name)
+
+		if len(where) > 0:
+			with self.connection:
+				cur = MySQLdb.cursors.DictCursor(self.connection)
+				cur.execute(self.ConditionsToWhere(req, where), [w.value for w in where])
+		else:
+			with self.connection:
+				cur = MySQLdb.cursors.DictCursor(self.connection)
+				cur.execute(req)
+
+		return list(cur.fetchall())
+
+	def select(self, where = [], select = [], limit = 30):
+		"""	WHERE -> Models.storage.Condition
+		"""
+		if len(select) > 0:
+			req = "SELECT {0} FROM `{1}` ".format(",".join([str(s) for s in select]), self.name)
+		else:
+			req = "SELECT * FROM `{0}` ".format(self.name)
+
+		if len(where) > 0:
+			with self.connection:
+				cur = MySQLdb.cursors.DictCursor(self.connection)
+				cur.execute(self.ConditionsToWhere(req, where) + " LIMIT {0}".format(limit), [w.value for w in where])
+		else:
+			with self.connection:
+				cur = MySQLdb.cursors.DictCursor(self.connection)
+				cur.execute(req + " LIMIT {0}".format(limit))
+
+		return list(cur.fetchall())
+
+	def delete(self, where = [], limit = 1):
+		"""	WHERE -> Models.storage.Condition
+		"""
+		req = "DELETE FROM `{0}` ".format(self.name)
+
+		if len(where) > 0:
+			with self.connection:
+				cur = MySQLdb.cursors.DictCursor(self.connection)
+				try:
+					cur.execute(self.ConditionsToWhere(req, where) + " LIMIT {0}".format(limit), [w.value for w in where])
+					return True
+				except:
+					return False
+		else:
+			with self.connection:
+				cur = MySQLdb.cursors.DictCursor(self.connection)
+				try:
+					cur.execute(req + " LIMIT {0}".format(limit))
+					return True
+				except:
+					return False
+
+		return False
+
 
 	"""
 	Has to be turned to something else

@@ -22,6 +22,9 @@ class Field(object):
 		self.options = options
 		self.parameters = parameters
 
+	def toString(self):
+		raise NotImplementedError()
+
 class Table(object):
 	def __init__(self, name, fields = [], keys = [], engine  = False, charset = False):
 
@@ -81,3 +84,35 @@ class Table(object):
 			raise ValueError("A field with the name " + field.name + " already exists")
 		self.fields.append(field)
 
+	#Structure
+	def check(self, forceCreate = False):
+		raise NotImplementedError()
+
+	def create(self):
+		raise NotImplementedError()
+
+	def drop(self):
+		raise NotImplementedError()
+
+	#Rows
+	def insert(self, data):
+		raise NotImplementedError()
+
+	def select(self, where = [], select = [], limit = 30):
+		raise NotImplementedError()
+
+	def delete(self, where = [], limit = 1):
+		raise NotImplementedError()
+
+
+class Condition(object):
+	"""docstring for Condition"""
+	def __init__(self, field, value, condition = "=", nextEl = ""):
+		self.field = field
+		self.value = value
+		WHERE_ACCEPTED = ["=", "!=", "LIKE", ">=", "<=", ">", "<"]
+		if condition in WHERE_ACCEPTED:
+			self.condition = condition
+		else:
+			self.condition = "="
+		self.next = nextEl
