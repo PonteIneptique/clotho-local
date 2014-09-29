@@ -62,11 +62,16 @@ class Table(DataTable):
 	def setKeys(self, keys = []):
 		if not isinstance(keys, list):
 			raise TypeError("Given keys is not a list")
-		if len(fields) == 0:
+		if len(keys) == 0:
 			raise ValueError("Given list of keys is empty")
 
-		for field in fields:
-			self.addField(field)
+		for key in keys:
+			self.addKey(key)
+
+	def addKey(self, key):
+		if key in [f for f in self.keys]:
+			raise ValueError("A field with the name " + field.name + " already exists")
+		self.keys.append(key)
 
 	def setFields(self, fields = []):
 		if not isinstance(fields, list):
