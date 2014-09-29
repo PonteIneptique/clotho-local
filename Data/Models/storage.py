@@ -1,12 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-class DataField:
-	pass
 
-class Field(DataField):
+class Field(object):
 	def __init__(self, name, parameters = None, options = None):
-		print name
 		if isinstance(name, basestring) and not isinstance(name, unicode):
 			name = unicode(name)
 		if isinstance(name, unicode):
@@ -25,10 +22,7 @@ class Field(DataField):
 		self.options = options
 		self.parameters = parameters
 
-class DataTable:
-	pass
-
-class Table(DataTable):
+class Table(object):
 	def __init__(self, name, fields = [], keys = [], engine  = False, charset = False):
 
 		self.fields = []

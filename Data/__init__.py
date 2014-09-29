@@ -1,4 +1,3 @@
-from Models import *
-from MySQL import *
-
+import Models
+import MySQL
 

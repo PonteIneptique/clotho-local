@@ -12,7 +12,6 @@ class Connection(object):
 		if isinstance(path, basestring):
 			clothoFolder = path
 		self.debug = False
-		print clothoFolder
 
 		"""
 		We need to load values from our config
@@ -33,9 +32,7 @@ class Connection(object):
 				self.conf["MySQL"]["identifiers"]["password"], 
 				self.conf["MySQL"]['database'][alias], 
 				charset='utf8');
-			print "Connected"
 		except:
-			print "Not connected"
 			self.con = False
 
 	def escape(self, string):
@@ -96,21 +93,40 @@ class Table(Models.storage.Table):
 	def check(self, forceCreate = False):
 		with self.connection:
 			cur = self.connection.cursor()
-			cur.execute("SHOW TABLES LIKE \"%s\" ", [self.name])
+			cur.execute("SHOW TABLES LIKE %s ", [self.name])
 			if len(cur.fetchall()) == 0:
 				if forceCreate:
 					return self.create()
 				return False
 			else:
 				return True
+		return False
 
 	def create(self):
 		with self.connection:
 			cur = self.connection.cursor()
 			fields = [f.toString() for f in self.fields]
 			fields += self.keys
-			print "CREATE TABLE `"+ self.name +"` ( " + ", ".join(fields) + ") ENGINE="+self.engine+" DEFAULT CHARSET=" + self.charset
-			cur.execute("CREATE TABLE `"+ self.name +"` ( " + ", ".join(fields) + ") ENGINE="+self.engine+" DEFAULT CHARSET=" + self.charset)
+			try:
+				cur.execute("CREATE TABLE `"+ self.name +"` ( " + ", ".join(fields) + ") ENGINE="+self.engine+" DEFAULT CHARSET=" + self.charset)
+				return True
+			except:
+				return False
+		return False
+
+	def length(self):
+		#SELECT COUNT(*) as count FROM clotho2_perseus.morph;
+		with self.connection:
+			cur = self.connection.cursor()
+			try:
+				cur.execute("SELECT COUNT(*) FROM {0}".format(self.name))
+			except:
+				return 0
+			try:
+				return cur.fetchone()[0]
+			except:
+				return 0
+		return 0
 
 	def insert(self, data):
 		""" Do a insert query
@@ -118,13 +134,32 @@ class Table(Models.storage.Table):
 		keywords arguments
 		data -- a dictionary with given fields name
 		"""
-		fieldName = ", ".join([field for field in data])
+		fieldName = ", ".join(["`%s`" % field for field in data])
 		fieldData = ", ".join([ '"' + data[field] + '"' for field in data])
 		with self.connection:
 			cur = self.connection.cursor()
-			cur.execute("INSERT INTO `%s` (%s) VALUES (%s)", [self.name, fieldName, fieldData])
+			req = "INSERT INTO `{0}` ({1}) ".format(self.name, fieldName)
+			try:
+				cur.execute(req + " VALUES ({0})".format(" ,".join([" %s " for field in data])), [data[field] for field in data])
+				try:
+					return self.connection.insert_id()
+				except:
+					return True
+			except:
+				return False
 		self.connection.commit()
 
+	def drop(self):
+		with self.connection:
+			cur = self.connection.cursor()
+			req = "DROP TABLE %s" % self.name
+			try:
+				cur.execute(req)
+				return True
+			except:
+				return False
+
+		return False
 
 	"""
 	Has to be turned to something else
