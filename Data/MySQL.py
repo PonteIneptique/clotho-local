@@ -203,6 +203,14 @@ class Table(Models.storage.Table):
 
 		return list(cur.fetchall())
 
+	def limit(self, limit = None):
+		if isinstance(limit, basestring) or isinstance(limit, int):
+			return " LIMIT {0} ".format(limit)
+		elif isinstance(limit, tuple):
+			return " LIMIT {0}, {1} ".format(limit[0], limit[1])
+		else:
+			return ""
+
 	def select(self, where = [], select = [], limit = 30):
 		"""	WHERE -> Models.storage.Condition
 		"""
@@ -214,11 +222,11 @@ class Table(Models.storage.Table):
 		if len(where) > 0:
 			with self.connection:
 				cur = MySQLdb.cursors.DictCursor(self.connection)
-				cur.execute(self.ConditionsToWhere(req, where) + " LIMIT {0}".format(limit), [w.value for w in where])
+				cur.execute(self.ConditionsToWhere(req, where) + self.limit(limit), [w.value for w in where])
 		else:
 			with self.connection:
 				cur = MySQLdb.cursors.DictCursor(self.connection)
-				cur.execute(req + " LIMIT {0}".format(limit))
+				cur.execute(req + self.limit(limit))
 
 		return list(cur.fetchall())
 
@@ -231,7 +239,7 @@ class Table(Models.storage.Table):
 			with self.connection:
 				cur = self.connection.cursor()
 				try:
-					cur.execute(self.ConditionsToWhere(req, where) + " LIMIT {0}".format(limit), [w.value for w in where])
+					cur.execute(self.ConditionsToWhere(req, where) + self.limit(limit), [w.value for w in where])
 					return True
 				except:
 					return False
@@ -239,7 +247,7 @@ class Table(Models.storage.Table):
 			with self.connection:
 				cur = MySQLdb.cursors.DictCursor(self.connection)
 				try:
-					cur.execute(req + " LIMIT {0}".format(limit))
+					cur.execute(req + self.limit(limit))
 					return True
 				except:
 					return False

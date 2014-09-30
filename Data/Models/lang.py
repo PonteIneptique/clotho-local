@@ -25,7 +25,7 @@ class Lemma(object):
 		self.definition = None
 		if isinstance(uid, basestring):
 			self.uid = uid
-		if isinstance(uid, int):
+		elif isinstance(uid, int):
 			self.uid = str(uid)
 		if isinstance(text, basestring):
 			self.text = text

@@ -3,7 +3,8 @@
 
 import sys 
 sys.path.append("../..")
-import Data.Models.lang
+
+from Data.Models import lang
 
 class Text(object):
 	def __init__(self, uid = None, metadata = None):
@@ -20,15 +21,9 @@ class Text(object):
 			self.metadata[key] = value
 
 class XmlChunk(object):
-	def __init__(self, uid = None, opening = None, closing = None):
-		self.uid = None
+	def __init__(self, opening = None, closing = None):
 		self.opening = None
 		self.closing = None
-
-		if isinstance(uid, basestring) or isinstance(uid, int):
-			self.uid = str(uid)
-		else:
-			raise TypeError("Uid is not a string or an int")
 
 		if isinstance(opening, basestring):
 			self.opening = opening
@@ -66,12 +61,36 @@ class Offset(object):
 		self.end = end
 
 class Chunk(object):
-	def __init__(self, uid = None, document = None, xml = None):
+	def __init__(self, uid = None, document = None, section = None, xml = None, offset = None):
+
 		self.uid = None
 
 		self.document = None
 		self.section = None
 		self.offset = None
+
+		if uid:
+			self.uid = uid
+
+		if isinstance(document, Text):
+			self.document = document
+		else:
+			raise TypeError("Document is not a Models.documents.Text")
+
+		if isinstance(section, Section):
+			self.section = section
+		elif section:
+			raise TypeError("Section is not a Models.documents.Section")
+
+		if isinstance(xml, XmlChunk):
+			self.xml = xml
+		elif xml:
+			raise TypeError("Xml is not a Models.documents.XmlChunk")
+
+		if isinstance(offset, Offset):
+			self.offset = offset
+		elif offset:
+			raise TypeError("Offset is not a Models.documents.Offset")
 
 	def getText(self):
 		#Should return a String
@@ -99,8 +118,10 @@ class Occurence(object):
 		else:
 			raise TypeError("Lemma is not a Models.lang.Lemma")
 
-		if isinstance(form, lang.form):
+		if isinstance(form, lang.Form):
 			self.form = form
+		elif not form:
+			self.form = None
 		else:
 			raise TypeError("Form is not a Models.lang.Form")
 

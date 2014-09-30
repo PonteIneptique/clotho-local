@@ -18,7 +18,7 @@ if CONSTANT_DATA_STORAGE == "MySQL":
 
 
 class Config(object):
-	def __init__(self, connection = None, path = None):
+	def __init__(self, connection = None, path = None, tables = []):
 		if path:
 			self.Connection = Connection(path = path)
 		else:
@@ -29,22 +29,29 @@ class Config(object):
 				Models.storage.Field("lemma_text", {"text" : None}),
 				Models.storage.Field("lemma_short_def", {"text" : None})
 			]), connection = self.Connection)
-
-		self.entities = Table(Models.storage.Table("hib_entities"), connection = self.Connection)
 		#self.dictionnary should be altered to 
 		"""
 			ALTER TABLE `clotho2_perseus`.`hib_lemmas` 
 			CHANGE COLUMN `lemma_id` `lemma_id` INT(11) NOT NULL AUTO_INCREMENT ;
 		"""
-		self.check()
 
-	def check(self):
-		assert self.dictionnary.check(), "No table for hib_dictionnary"
-		assert self.entities.check(), "No table hib_entities"
+		self.entities = Table(Models.storage.Table("hib_entities"), connection = self.Connection)
+
+		self.frequencies = Table(Models.storage.Table("hib_frequencies"), connection = self.Connection)
+
+		self.chunks = Table(Models.storage.Table("hib_chunks"), connection = self.Connection)
+
+		self.tables = [self.dictionnary, self.entities, self.frequencies, self.chunks]
+		self.check(tables)
+
+	def check(self, tables = []):
+		for table in self.tables:
+			if table.name in tables:
+				assert table.check(), "No table for {0}".format(table.name)
 
 class Lemma(lang.Lemma):
 	def __init__(self):
-		self.config = Config()
+		self.config = Config(tables = ["hib_lemmas"])
 
 	def search(self, w, uid = False, limit = 30, strict = False):
 		if uid:
@@ -82,53 +89,73 @@ class Lemma(lang.Lemma):
 
 		return self.config.dictionnary.delete(conditions, limit = 100)
 
+class PerseusChunk(Models.documents.Chunk):
+	def __init__(self, *args, **kw):
+		super(self.__class__, self).__init__(*args, **kw)
+
+	def getText(self):
+		return "THE STRING"
+
 
 class Occurence(object):
 	def __init__(self):
-		pass
+		self.config = Config(tables = ["hib_entities", "hib_frequencies"])
 
 	def search(self, lemma):
 		if not(isinstance(lemma, Models.lang.Lemma)):
 			raise TypeError("Lemma is not an instance of Models.lang.Lemma")
-		raise NotImplementedError()
 		
 		condition = [
 			Models.storage.Condition("entity_type", "lemma", "=", "AND"),
 			Models.storage.Condition("display_name", lemma.toString(), "=")
 		]
-		"""
 
-		| id            | int(11)      | NO   | PRI | NULL    | auto_increment |
+		results = self.config.entities.select(where = condition, select = ["id"], limit = 1)
+		if len(results) == 0:
+			return []
 
-		| document_id   | varchar(50)  | YES  | MUL | NULL    |                |
+		#cur.execute("SELECT chunk_id FROM hib_frequencies WHERE entity_id = '" + str(i) + "' AND chunk_id != ''")
+		condition = [
+			Models.storage.Condition("entity_id", results[0]["id"], "=", "AND"),
+			Models.storage.Condition("chunk_id", "", "!=")
+		]
 
-		| type          | varchar(30)  | YES  |     | NULL    |                |
-		| value         | varchar(250) | YES  |     | NULL    |                |
-		| position      | int(11)      | YES  |     | NULL    |                |
-		| abs_position  | int(11)      | YES  |     | NULL    |                |
+		results = self.config.frequencies.select(where = condition, select = ["chunk_id"], limit = 10)
 
-		| open_tags     | text         | YES  |     | NULL    |                |
-		| close_tags    | text         | YES  |     | NULL    |                |
+		chunks = []
+		for result in results:
+			c = self.config.chunks.select([Models.storage.Condition("id", result["chunk_id"], "=")])
+			if len(c) == 0:
+				raise ValueError("A chunk is missing in the database")
+			c = c[0]
+			chunks.append(
+				Models.documents.Occurence(
+					#uid = c["id"], 
+					#document = Models.documents.Text(uid = c["document_id"]), 
+					lemma = lemma,
+					chunk = PerseusChunk(
+						uid = c["id"], 
+						document = Models.documents.Text(uid = c["document_id"]),
+						section = Models.documents.Section(
+							section = c["type"], 
+							identifier = c["value"], 
+							position = c["position"], 
+							absolute_position = c["abs_position"]
+						), 
+						xml = Models.documents.XmlChunk(
+							opening = c["open_tags"], 
+							closing = c["close_tags"]
+						)
+					)
+				)
+			)
+		return chunks
 
-		| start_offset  | int(11)      | YES  |     | NULL    |                |
-		| end_offset    | int(11)      | YES  |     | NULL    |                |
-
-		| head          | text         | YES  |     | NULL    |                |
-		"""
-		data = []
-		cur = self.con.cursor()
-
-		#We retrieve the entity_id before going further
-		cur.execute("SELECT id FROM hib_entities WHERE entity_type = 'Lemma' and display_name='"+query+"'")
-		i = cur.fetchone()
-		i = i[0]
-
-
-		cur.execute("SELECT chunk_id FROM hib_frequencies WHERE entity_id = '" + str(i) + "' AND chunk_id != ''")
-
-		rows = cur.fetchall()
-
-		for row in rows:
-			data.append(str(list(row)[0]))
-
-		return data, len(rows)
+"""
+L = Lemma()
+#l = Models.lang.Lemma(text = "habeo")
+r = L.search("habeo", strict = True)
+habeo = r[0]
+O = Occurence()
+print O.search(habeo)
+"""
