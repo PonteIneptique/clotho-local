@@ -250,30 +250,6 @@ class Table(Models.storage.Table):
 	"""
 	Has to be turned to something else
 	"""
-	def lemma(self, query, numeric = False):
-		""" Return a dictionary where the key is a numeric identifier and the value is a list
-		where the data are the lemma unique identifier, lemma's text, the bare headword and the lemma short definition
-
-		key arguments
-		query -- A string or an int refering to the lemma identifier or spelling
-		numeric -- a boolean indicating if the query is a numeric identifier
-
-		"""
-		data = {}
-		cur = self.con.cursor()
-		if numeric == False:
-			cur.execute("SELECT lemma_id, lemma_text, bare_headword, lemma_short_def FROM hib_lemmas WHERE lemma_text LIKE '" + query + "'")
-		else:
-			cur.execute("SELECT lemma_id, lemma_text, bare_headword, lemma_short_def FROM hib_lemmas WHERE lemma_id = '" + str(query) + "'")
-
-		rows = cur.fetchall()
-
-		i = 0
-		for row in rows:
-			data[i] = list(row)
-			i += 1
-
-		return data, len(rows)
 
 	def chunk(self, query):
 		""" Return MySQL data about a chunk
