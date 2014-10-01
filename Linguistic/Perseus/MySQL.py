@@ -141,12 +141,3 @@ class Occurence(object):
 				)
 			)
 		return chunks
-
-L = Lemma()
-#l = Models.lang.Lemma(text = "habeo")
-r = L.search("habeo", strict = True)
-habeo = r[0]
-O = Occurence()
-R = O.search(habeo)
-for r in R:
-	print r.toString()

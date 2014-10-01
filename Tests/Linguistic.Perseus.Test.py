@@ -13,6 +13,7 @@ import Linguistic.Perseus
 
 Perseus = Linguistic.Perseus.MySQL
 Lemma = Linguistic.Perseus.MySQL.Lemma
+Occurence = Linguistic.Perseus.MySQL.Occurence
 
 
 ######################################
@@ -47,3 +48,11 @@ assert l.remove(Models.lang.Lemma(None, "azerty", "Clavier")), "Can't remove las
 #
 #
 ######################################
+L = Lemma()
+#l = Models.lang.Lemma(text = "habeo")
+r = L.search("habeo", strict = True)
+habeo = r[0]
+O = Occurence()
+R = O.search(habeo)
+for r in R:
+	print r.toString()
