@@ -165,7 +165,7 @@ class Initiate(object):
 		q.deco()
 
 		#Then the morph
-		s.
+		#s.
 
 		#Then the dumps
 		q.deco()
@@ -888,6 +888,7 @@ class Text(object):
 		Keyword arguments:
 		identifier -- A list of identifier given by Lucene or MYSQL
 		"""
+
 		data , l = self.sql.metadata(identifier[1])
 		r = { "identifier" : identifier[1]}
 
@@ -903,6 +904,8 @@ class Text(object):
 		Keyword arguments:
 		identifier -- A list of identifier given by Lucene or MYSQL
 		"""
+		
+		self.regexp = re.compile("Perseus:text:([0-9]{4}\.[0-9]{2}\.[0-9]{4})")
 		p = clothoFolder + "texts/"
 		identifier = self.regexp.search(identifier).group(1)
 		#Typical data : Perseus:text:2008.01.0558

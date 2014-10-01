@@ -125,4 +125,5 @@ class Occurence(object):
 		else:
 			raise TypeError("Form is not a Models.lang.Form")
 
-		pass
+	def toString(self):
+		return self.text

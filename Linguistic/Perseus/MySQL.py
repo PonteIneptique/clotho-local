@@ -3,11 +3,10 @@
 
 CONSTANT_DATA_STORAGE = "MySQL"
 import sys, os
-
 sys.path.append("../..")
 
 from Data import Models
-import Linguistic.lang as lang
+from Linguistic.Perseus.Common import Chunk
 
 if CONSTANT_DATA_STORAGE == "MySQL":
 	from Data import MySQL
@@ -49,7 +48,7 @@ class Config(object):
 			if table.name in tables:
 				assert table.check(), "No table for {0}".format(table.name)
 
-class Lemma(lang.Lemma):
+class Lemma(Models.lang.Lemma):
 	def __init__(self):
 		self.config = Config(tables = ["hib_lemmas"])
 
@@ -89,14 +88,6 @@ class Lemma(lang.Lemma):
 
 		return self.config.dictionnary.delete(conditions, limit = 100)
 
-class PerseusChunk(Models.documents.Chunk):
-	def __init__(self, *args, **kw):
-		super(self.__class__, self).__init__(*args, **kw)
-
-	def getText(self):
-		return "THE STRING"
-
-
 class Occurence(object):
 	def __init__(self):
 		self.config = Config(tables = ["hib_entities", "hib_frequencies"])
@@ -133,7 +124,7 @@ class Occurence(object):
 					#uid = c["id"], 
 					#document = Models.documents.Text(uid = c["document_id"]), 
 					lemma = lemma,
-					chunk = PerseusChunk(
+					chunk = Chunk(
 						uid = c["id"], 
 						document = Models.documents.Text(uid = c["document_id"]),
 						section = Models.documents.Section(
@@ -151,11 +142,11 @@ class Occurence(object):
 			)
 		return chunks
 
-"""
 L = Lemma()
 #l = Models.lang.Lemma(text = "habeo")
 r = L.search("habeo", strict = True)
 habeo = r[0]
 O = Occurence()
-print O.search(habeo)
-"""
+R = O.search(habeo)
+for r in R:
+	print r.toString()
