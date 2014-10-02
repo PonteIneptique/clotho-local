@@ -24,6 +24,14 @@ OccurenceSearchInstance.search(Data.Models.lang.Lemma(uid = None, "habeo", defin
 # -> List(Data.Models.documents.Occurence)
 ```
 
+##Filtering occurences
+**TODO**
+
+```python
+#Example
+# -> Data.Models.documents.Occurence()
+```
+
 ##Contextualisation of occurences
 This **optionnal step** aims to provide services which will take an Occurence() object and strip it texts to what the user needs. For example, this could reduce the occurence to a grammatical Sentence or to a n-word window. This class should have a strip() function which takes a Lemma() and an Cccurence as parameter and returns an Occurence
 
