@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import re, libxml2, sys, codecs
+import re, libxml2, sys, codecs, os
 sys.path.append("../..")
 
 import Data
@@ -52,11 +52,13 @@ class Chunk(Data.Models.documents.Chunk):
 		"""
 			Parse and return a given path
 		"""
+		__dir__ = os.path.dirname(os.path.abspath(__file__))
 		_regexp = re.compile("Perseus:text:([0-9]{4}\.[0-9]{2}\.[0-9]{4})")
 		p = "../../texts/"
 		identifier = _regexp.search(self.document.uid).group(1)
 		identifier = identifier.split(".")
 		p += ".".join(identifier[:2]) + "/" + ".".join(identifier) + ".xml"
+		p = os.path.join(__dir__, p)
 
 		return p
 

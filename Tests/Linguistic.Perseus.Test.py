@@ -3,8 +3,6 @@
 
 import sys, os
 
-print os.path.dirname(__file__)
-
 sys.path.append("../")
 
 from Data import Models
