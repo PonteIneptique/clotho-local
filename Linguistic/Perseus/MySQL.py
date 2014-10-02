@@ -15,7 +15,6 @@ if CONSTANT_DATA_STORAGE == "MySQL":
 	Field = MySQL.Field
 	Connection = MySQL.Connection
 
-
 class Config(object):
 	def __init__(self, connection = None, path = None, tables = []):
 		if path:
@@ -105,17 +104,16 @@ class Occurence(object):
 		if len(results) == 0:
 			return []
 
-		#cur.execute("SELECT chunk_id FROM hib_frequencies WHERE entity_id = '" + str(i) + "' AND chunk_id != ''")
 		condition = [
 			Models.storage.Condition("entity_id", results[0]["id"], "=", "AND"),
 			Models.storage.Condition("chunk_id", "", "!=")
 		]
 
-		results = self.config.frequencies.select(where = condition, select = ["chunk_id"], limit = 10)
+		results = self.config.frequencies.select(where = condition, select = ["chunk_id"])#DEBUG, limit = 10)
 
 		chunks = []
 		for result in results:
-			c = self.config.chunks.select([Models.storage.Condition("id", result["chunk_id"], "=")])
+			c = self.config.chunks.select([Models.storage.Condition("id", result["chunk_id"], "=")], select = ["id", "document_id", "type", "value", "position", "abs_position", "open_tags", "close_tags", "start_offset", "end_offset"])
 			if len(c) == 0:
 				raise ValueError("A chunk is missing in the database")
 			c = c[0]
@@ -136,6 +134,10 @@ class Occurence(object):
 						xml = Models.documents.XmlChunk(
 							opening = c["open_tags"], 
 							closing = c["close_tags"]
+						),
+						offset = Models.documents.Offset(
+							start = c["start_offset"],
+							end = c["end_offset"]
 						)
 					)
 				)

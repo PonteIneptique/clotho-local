@@ -62,10 +62,9 @@ class Offset(object):
 
 class Chunk(object):
 	def __init__(self, uid = None, document = None, section = None, xml = None, offset = None):
-
 		self.uid = None
-
 		self.document = None
+		self.xml = None
 		self.section = None
 		self.offset = None
 

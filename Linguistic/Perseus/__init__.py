@@ -4,3 +4,4 @@
 import MySQL
 import Lucene
 import Rest
+from Common import Chunk

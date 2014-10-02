@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys, re, codecs
-from bs4 import BeautifulSoup
+import re, libxml2, sys, codecs
 sys.path.append("../..")
 
 import Data
@@ -14,19 +13,38 @@ class Chunk(Data.Models.documents.Chunk):
 
 	def getChunkText(self, text):
 		if self.xml:
-			model = BeautifulSoup(" ".join([self.xml.opening, self.xml.closing]))
-			tags = model.find_all(True)
+			tags = re.compile("(<([^>]*)>)")
+			tags = [tag[1] for tag in tags.findall(self.xml.opening)] # We have here a list of xml tags with n="X" if there is one
+			attr = re.compile('([a-zA-Z0-9.]+)((:\=")+([a-zA-Z1-9])(:+")+)*')
 
-			t = BeautifulSoup(self.text)
-			div1 = t.find(tags[-1].name, tags[-1].attrs)
-			div2 = div1.find(True,{"type" : self.section.section, "n" : self.section.identifier})
+			string = []
+			for tag in tags[-2:]:
+				t = attr.findall(tag)
+				if len(t) == 1:
+					string.append(tag)
+				else:
+					xpath = t[0][0]
+					t = [a[0] for a in t[1:]]
+					t = zip(t[0::2], t[1::2])
+					t = ['[@{0}="{1}"]'.format(a[0], a[1]) for a in t]
+					z = t
+					xpath += "".join(z)
+					string.append(xpath)
 
-			if div2:
-				return div2.text.encode("UTF-8")
-			elif div1:
-				return div1.text.encode("UTF-8")
-			else:
-				raise ValueError("Text not found for given identifier")
+
+			xpath = "//" + "/".join(string) + '/*[@unit="{0}"][@n="{1}"]/following-sibling::node()'.format(self.section.section, self.section.identifier)
+
+			doc = libxml2.parseDoc(self.text.encode("utf-8"))
+			ctxt = doc.xpathNewContext()
+			div1 = ctxt.xpathEval(xpath)
+
+			results = []
+			for e in div1:
+				if e.prop("unit") and e.prop("unit") == self.section.section:
+					break
+				results.append(e.getContent().replace("\t", ""))
+			results = " ".join(results)
+			return results
 		else:
 			return text
 
