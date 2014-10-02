@@ -319,20 +319,7 @@ class Setup(object):
 		"""
 
 		path, filename = self.getPathAndFilename(mode, url)
-
-		if mode == "mysql":
-			path = clothoFolder + "cache/mysql/"
-			filename = self.tableName(url) + ".tar.gz"
-		elif mode == "morph":
-			path = clothoFolder + "morph/"
-			filename = "latin.morph.xml"
-		elif mode == "progressbar":
-			path = clothoFolder 
-			filename = "progressbar-2.3.tar.gz"
-		elif mode == "texts":
-			path = clothoFolder 
-			filename = "sgml.xml.texts.tar.gz"
-
+		
 		if os.path.isfile(path + filename) == False:
 			filename = wget.download(url)
 			os.rename(clothoFolder + filename, path + filename)
@@ -470,39 +457,7 @@ class Setup(object):
 				print "\t-> Done"
 
 
-	def morph(self):
-		print "Checking Latin Morph (From Perseus)"
-		self.download("morph", self.morphfile)
 
-		table = self.tables["morph"]
-		table.setCon(self.perseus)
-		if not table.check():
-			print "Creating table " + table.name
-			table.create()
-		if table.empty():
-			self.morphFeed(table)
-
-	def morphFeed(self, morph = False):
-		data = {"lemma_morph" : "", "form_morph" : ""}
-		if morph:
-			morphTable = morph
-		else:
-			morphTable = self.tables["morph"]
-		if morphTable.check():
-			i = 0
-			for event, elem in xml.etree.cElementTree.iterparse(clothoFolder + "morph/latin.morph.xml"):
-				if elem.tag == "analysis":
-					for child in elem:
-						if child.tag == "lemma":
-							data["lemma_morph"] = child.text
-						elif child.tag == "form":
-							data["form_morph"] = child.text
-						print child.tag + " = " + child.text
-					try:
-						morphTable.insert(data)
-					except:
-						continue
-			print str(i) + " morph imported in database"
 
 class Cache(object):
 	def __init__(self):

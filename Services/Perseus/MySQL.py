@@ -6,7 +6,9 @@ import sys, os
 sys.path.append("../..")
 
 from Data import Models
+import Linguistic.Lemma
 from Services.Perseus.Common import Chunk
+from Data import Tools
 
 if CONSTANT_DATA_STORAGE == "MySQL":
 	from Data import MySQL
@@ -39,7 +41,9 @@ class Config(object):
 
 		self.chunks = Table(Models.storage.Table("hib_chunks"), connection = self.Connection)
 
-		self.tables = [self.dictionnary, self.entities, self.frequencies, self.chunks]
+		self.morph = Table(Models.storage.Table("morph"), connection = self.Connection)
+
+		self.tables = [self.dictionnary, self.entities, self.frequencies, self.chunks, self.morph]
 		self.check(tables)
 
 	def check(self, tables = []):
@@ -47,9 +51,67 @@ class Config(object):
 			if table.name in tables:
 				assert table.check(), "No table for {0}".format(table.name)
 
+class LatinFormFinder(Linguistic.Lemma.form.Finder):
+	def __init__(self):
+		self.file = Tools.download.File("https://github.com/jfinkels/hopper/raw/master/xml/data/latin.morph.xml", "/morph", "latin.morph.xml")
+		self.table = Table(
+						table = Models.storage.Table(
+							"morph", 
+							fields = [
+								Models.storage.Field("id_morph", {"int" : "11"}, "NOT NULL AUTO_INCREMENT"),
+								Models.storage.Field("lemma_morph", {"varchar" : "100"}, "CHARACTER SET utf8 DEFAULT NULL"),
+								Models.storage.Field("form_morph", {"varchar" :"100"}, "CHARACTER SET utf8 DEFAULT NULL")
+							], 
+							keys = ["PRIMARY KEY (`id_morph`)"]
+						), 
+						connection =Config().Connection
+					)
+
+		pass
+
+	def install(self, Lemma):
+		pass
+
+	def check(self):
+		self.file.check(force = True)
+		self.table.check(forceCreate = True)
+		if self.table.length() == 0:
+			try:
+				self.feed()
+			except Exception as e:
+				print e
+		return False
+
+	def feed(self):
+		data = {"lemma_morph" : "", "form_morph" : ""}
+		if self.table.check():
+			i = 0
+			for event, elem in xml.etree.cElementTree.iterparse(self.file.path):
+				if elem.tag == "analysis":
+					for child in elem:
+						if child.tag == "lemma":
+							data["lemma_morph"] = child.text
+						elif child.tag == "form":
+							data["form_morph"] = child.text
+						print child.tag + " = " + child.text
+					try:
+						morphTable.insert(data)
+					except:
+						continue
+			print str(i) + " morph imported in database"
+
+	def getForms(self, Lemma):
+		pass
+
+l = LatinFormFinder()
+l.check()
+
 class Lemma(Models.lang.Lemma):
 	def __init__(self):
-		self.config = Config(tables = ["hib_lemmas"])
+		self.config = Config(tables = ["hib_lemmas", "morphs"])
+
+	def flection(self):
+		self.config = Config(tables = ["hib_morph"])
 
 	def search(self, w, uid = False, limit = 30, strict = False):
 		if uid:
