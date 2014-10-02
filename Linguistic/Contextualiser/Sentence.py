@@ -5,8 +5,12 @@ import sys
 sys.path.append("../..")
 
 from common import Model
+import Data.Models
 import nltk
 
+
+#Data.Models.lang.Lemma()
+#Data.Models.documents.Occurence()
 class Sentence(Model):
 
 	def __init__(self):

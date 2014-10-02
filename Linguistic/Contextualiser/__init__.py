@@ -3,3 +3,4 @@
 
 import common
 from Sentence import *
+from WordWindow import *
