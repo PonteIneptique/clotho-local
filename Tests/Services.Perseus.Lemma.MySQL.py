@@ -6,11 +6,10 @@ import sys, os
 sys.path.append("../")
 
 from Data import Models
-import Linguistic.lang as lang
-import Linguistic.Perseus
+import Services.Perseus
 
-Perseus = Linguistic.Perseus.MySQL
-Lemma = Linguistic.Perseus.MySQL.Lemma
+Perseus = Services.Perseus.MySQL
+Lemma = Services.Perseus.MySQL.Lemma
 
 l = Lemma()
 search = l.search("azerty")

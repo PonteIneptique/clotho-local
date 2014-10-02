@@ -6,7 +6,7 @@ import sys, os
 sys.path.append("../..")
 
 from Data import Models
-from Linguistic.Perseus.Common import Chunk
+from Services.Perseus.Common import Chunk
 
 if CONSTANT_DATA_STORAGE == "MySQL":
 	from Data import MySQL

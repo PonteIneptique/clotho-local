@@ -1,4 +1,5 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from Perseus import *
+from Lemma import *
+from Contextualiser import *
