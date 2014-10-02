@@ -11,16 +11,7 @@ import Linguistic.Perseus
 
 Perseus = Linguistic.Perseus.MySQL
 Lemma = Linguistic.Perseus.MySQL.Lemma
-Occurence = Linguistic.Perseus.MySQL.Occurence
 
-
-######################################
-#
-#
-#	Test for Lemma
-#
-#
-######################################
 l = Lemma()
 search = l.search("azerty")
 
@@ -36,21 +27,3 @@ assert (len(search) == 1 and search[0].toString() == "azerty"), "No azerty form 
 assert len(l.search("azert", strict = True)) == 0, "Strict search should not have found azert"
 
 assert l.remove(Models.lang.Lemma(None, "azerty", "Clavier")), "Can't remove last lemma"
-
-
-
-######################################
-#
-#
-#	Test for Occurencies
-#
-#
-######################################
-
-L = Lemma()
-#l = Models.lang.Lemma(text = "habeo")
-r = L.search("habeo", strict = True)
-habeo = r[0]
-O = Occurence()
-R = O.search(habeo)
-print len(R)
