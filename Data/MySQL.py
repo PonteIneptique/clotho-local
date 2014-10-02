@@ -123,8 +123,9 @@ class Table(Models.storage.Table):
 			cur = self.connection.cursor()
 			fields = [f.toString() for f in self.fields]
 			fields += self.keys
+			req = "CREATE TABLE `{0}` ({1}) ENGINE={2} DEFAULT CHARSET={3}".format(self.name, ", ".join(fields), self.engine, self.charset)
 			try:
-				cur.execute("CREATE TABLE `"+ self.name +"` ( " + ", ".join(fields) + ") ENGINE="+self.engine+" DEFAULT CHARSET=" + self.charset)
+				cur.execute(req)
 				return True
 			except:
 				return False
