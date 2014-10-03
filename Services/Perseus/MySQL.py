@@ -114,7 +114,19 @@ class LatinFormFinder(Linguistic.Lemma.form.Finder):
 		return False
 
 	def getForms(self, Lemma):
-		pass
+		lemma_form = self.table.select(
+						[ Models.storage.Condition("form_morph", Lemma.text, "=") ], 
+						select = ["lemma_morph"], 
+						limit = None
+					)
+
+		conditions = [Models.storage.Condition("lemma_morph", morph["lemma_morph"], "=", "OR") for morph in lemma_form]
+		if len(conditions) > 0:
+			conditions[len(conditions) - 1 ].next = ""
+
+		data = self.table.select(conditions, limit = None)
+		
+		return [Models.lang.Form(uid = f["id_morph"], text = f["form_morph"], lemma = Lemma, pos = f["pos"], number = f["number"], gender = f["gender"], case = f["case"]) for f in data]
 
 class Lemma(Models.lang.Lemma):
 	def __init__(self):
