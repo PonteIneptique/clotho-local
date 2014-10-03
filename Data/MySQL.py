@@ -47,8 +47,6 @@ class Connection(object):
 		"""
 		return MySQLdb.escape_string(string)
 
-import copy
-
 class Field(Models.storage.Field):
 	def __init__(self, field = None):
 		if isinstance(field, Models.storage.Field):
