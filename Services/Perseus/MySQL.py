@@ -3,6 +3,8 @@
 
 CONSTANT_DATA_STORAGE = "MySQL"
 import sys, os
+import xml
+
 sys.path.append("../..")
 
 from Data import Models
@@ -58,9 +60,16 @@ class LatinFormFinder(Linguistic.Lemma.form.Finder):
 						table = Models.storage.Table(
 							"morph", 
 							fields = [
+								#Legacy
 								Models.storage.Field("id_morph", {"int" : "11"}, "NOT NULL AUTO_INCREMENT"),
 								Models.storage.Field("lemma_morph", {"varchar" : "100"}, "CHARACTER SET utf8 DEFAULT NULL"),
-								Models.storage.Field("form_morph", {"varchar" :"100"}, "CHARACTER SET utf8 DEFAULT NULL")
+								Models.storage.Field("form_morph", {"varchar" :"100"}, "CHARACTER SET utf8 DEFAULT NULL"),
+								#New
+								Models.storage.Field("pos", {"varchar" :"20"}, "CHARACTER SET utf8 DEFAULT NULL"),
+								Models.storage.Field("number", {"varchar" :"20"}, "CHARACTER SET utf8 DEFAULT NULL"),
+								Models.storage.Field("gender", {"varchar" :"20"}, "CHARACTER SET utf8 DEFAULT NULL"),
+								Models.storage.Field("case", {"varchar" :"20"}, "CHARACTER SET utf8 DEFAULT NULL")
+
 							], 
 							keys = ["PRIMARY KEY (`id_morph`)"]
 						), 
@@ -69,42 +78,43 @@ class LatinFormFinder(Linguistic.Lemma.form.Finder):
 
 		pass
 
-	def install(self, Lemma):
-		pass
+	def install(self):
+		data = {"lemma_morph" : "", "form_morph" : "", "pos" : "", "number" :"", "gender" : "", "case" : ""}
+		for event, elem in xml.etree.cElementTree.iterparse(self.file.path):
+			if elem.tag == "analysis":
+				for child in elem:
+					if child.tag == "lemma":
+						data["lemma_morph"] = child.text
+					elif child.tag == "form":
+						data["form_morph"] = child.text
+					elif child.tag == "pos":
+						data["pos"] = child.text
+					elif child.tag == "number":
+						data["number"] = child.text
+					elif child.tag == "gender":
+						data["gender"] = child.text
+					elif child.tag == "case":
+						data["case"] = child.text
+				try:
+					self.table.insert(data)
+				except Exception as e:
+					print e
+					continue
+		return self.table.length()
 
 	def check(self):
 		self.file.check(force = True)
 		self.table.check(forceCreate = True)
+		self.table.columns()
 		if self.table.length() == 0:
 			try:
-				self.feed()
+				self.install()
 			except Exception as e:
 				print e
 		return False
 
-	def feed(self):
-		data = {"lemma_morph" : "", "form_morph" : ""}
-		if self.table.check():
-			i = 0
-			for event, elem in xml.etree.cElementTree.iterparse(self.file.path):
-				if elem.tag == "analysis":
-					for child in elem:
-						if child.tag == "lemma":
-							data["lemma_morph"] = child.text
-						elif child.tag == "form":
-							data["form_morph"] = child.text
-						print child.tag + " = " + child.text
-					try:
-						morphTable.insert(data)
-					except:
-						continue
-			print str(i) + " morph imported in database"
-
 	def getForms(self, Lemma):
 		pass
-
-l = LatinFormFinder()
-l.check()
 
 class Lemma(Models.lang.Lemma):
 	def __init__(self):

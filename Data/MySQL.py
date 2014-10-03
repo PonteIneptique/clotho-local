@@ -106,6 +106,30 @@ class Table(Models.storage.Table):
 		else:
 			return ""
 
+	def columns(self):
+		with self.connection:
+			cur = MySQLdb.cursors.DictCursor(self.connection)
+			cur.execute("SHOW COLUMNS FROM {0}".format(self.name))
+			return list(cur.fetchall())
+
+	def addField(self, field, position = None, neighbour = None):
+		req = "ALTER TABLE `{0}` ADD COLUMN {1} ".format(self.name, field.toString())
+		if position != None and isinstance(neighbour, Field):
+			req += "{0} `{1}`".format(position, neighbour.name)
+
+		with self.connection:
+			cur = self.connection.cursor()
+			try:
+				cur.execute(req)
+				return True
+			except Exception as e:
+				print e
+				return False
+
+		return False
+
+
+
 	def check(self, forceCreate = False):
 		with self.connection:
 			cur = self.connection.cursor()
@@ -115,6 +139,21 @@ class Table(Models.storage.Table):
 					return self.create()
 				return False
 			else:
+				columns = self.columns()
+				existing = [column["Field"] for column in columns]
+				i = 0
+				for field in self.fields:
+					if field.name not in existing:
+						if i == 0 and len(self.fields) > 1:
+							if not self.addField(field, "BEFORE", self.fields[1]):
+								return False
+						elif i == 0:
+							if not self.addField(field):
+								return False
+						else:
+							if not self.addField(field, "AFTER", self.fields[i-1]):
+								return False
+					i += 1
 				return True
 		return False
 
@@ -152,20 +191,18 @@ class Table(Models.storage.Table):
 		data -- a dictionary with given fields name
 		"""
 		fieldName = ", ".join(["`%s`" % field for field in data])
-		fieldData = ", ".join([ '"' + data[field] + '"' for field in data])
 		with self.connection:
 			cur = self.connection.cursor()
 			req = "INSERT INTO `{0}` ({1}) ".format(self.name, fieldName)
-			cur.execute(req + " VALUES ({0})".format(" ,".join([" %s " for field in data])), [data[field] for field in data])
 			try:
-				return self.connection.insert_id()
-			except:
-				return True
-			try:
-				pass
+				cur.execute(req + " VALUES ({0})".format(" ,".join([" %s " for field in data])), [data[field].encode("utf-8") for field in data])
+				try:
+					return self.connection.insert_id()
+				except:
+					return False
 			except:
 				return False
-		self.connection.commit()
+		return False
 
 	def drop(self):
 		with self.connection:
