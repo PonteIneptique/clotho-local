@@ -8,7 +8,7 @@ sys.path.append("../..")
 import nltk
 from Linguistic.Contextualiser.common import Model as Contextualiser
 from Linguistic.Contextualiser.common import Dots as DotsList
-from Linguistic.Lemma.form import Finder as FormFinder
+from Linguistic.Lemma.form import Lemmatizer as FormFinder
 
 class WordWindow(Contextualiser):
 

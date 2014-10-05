@@ -6,7 +6,7 @@ import inspect
 sys.path.append("../..")
 
 from Linguistic.Contextualiser.common import Model as Contextualiser
-from Linguistic.Lemma.form import Finder as FormFinder
+from Linguistic.Lemma.form import Lemmatizer as FormFinder
 import Data.Models
 import nltk
 

@@ -25,5 +25,5 @@ R = O.search(habeo)[2]
 #Context test
 C = Contextualiser(FormFinderClass = FormFinder)
 CCleaned = C.strip(R, habeo)
-for occ in CCleaned:
-	print occ.text
+
+#Lemmatized test

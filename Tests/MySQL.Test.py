@@ -5,7 +5,7 @@ from Data import MySQL
 
 Con = MySQL.Connection()
 
-SchemeTable = Models.storage.Table("morphe", fields = [
+SchemeTable = Models.storage.Table("test_table", fields = [
 						Models.storage.Field("id_morph", {"int" : "11"}, "NOT NULL AUTO_INCREMENT"),
 						Models.storage.Field("lemma_morph", {"varchar" : "100"}, "CHARACTER SET utf8 DEFAULT NULL"),
 						Models.storage.Field("form_morph", {"varchar" :"100"}, "CHARACTER SET utf8 DEFAULT NULL")
