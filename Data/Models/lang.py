@@ -36,10 +36,11 @@ class Form(object):
 		return len([l for l in self.lemma if isinstance(l, Lemma)])
 
 class Lemma(object):
-	def __init__(self, uid = None, text = None, definition = None):
+	def __init__(self, uid = None, text = None, definition = None, forms = None):
 		self.uid = None
 		self.text = None
 		self.definition = None
+		self.forms = None
 		if isinstance(uid, basestring):
 			self.uid = uid
 		elif isinstance(uid, int):
@@ -51,3 +52,6 @@ class Lemma(object):
 
 	def toString(self):
 		return self.text
+
+	def getFormStringList(self):
+		return [form.toString() for form in self.forms]
