@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-class Finder(object):
+class Lemmatizer(object):
 	def __init__(self):
 		pass
 
@@ -15,11 +15,6 @@ class Finder(object):
 	def getForms(self, lemma):
 		raise NotImplementedError("getForms not implemented")
 
-class Lemmatizer(object):
-
-	def __init__(self):
-		pass
-
-	def getLemmatized(self):
-		#Should return an Occurence with a list of lemma in lemmas
+	def getLemmatized(self, occurence):
+		#Should return an Occurence with a list of lemma in Occurence.lemmatized
 		raise NotImplementedError("getLemmatized is not implemented")

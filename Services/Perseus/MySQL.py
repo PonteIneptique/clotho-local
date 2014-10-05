@@ -8,9 +8,11 @@ import xml
 sys.path.append("../..")
 
 from Data import Models
-from Linguistic.Lemma.form import Finder as FormFinder
+from Linguistic.Lemma.form import Lemmatizer
 from Services.Perseus.Common import Chunk
 from Data import Tools
+
+import nltk
 
 if CONSTANT_DATA_STORAGE == "MySQL":
 	from Data import MySQL
@@ -53,7 +55,7 @@ class Config(object):
 			if table.name in tables:
 				assert table.check(), "No table for {0}".format(table.name)
 
-class LatinFormFinder(FormFinder):
+class LatinLemmatizer(Lemmatizer):
 	def __init__(self):
 		self.file = Tools.download.File("https://github.com/jfinkels/hopper/raw/master/xml/data/latin.morph.xml", "/morph", "latin.morph.xml")
 		self.table = Table(
@@ -76,7 +78,7 @@ class LatinFormFinder(FormFinder):
 						connection =Config().Connection
 					)
 
-		pass
+		self.check()
 
 	def install(self):
 		data = {"lemma_morph" : "", "form_morph" : "", "pos" : "", "number" :"", "gender" : "", "case" : ""}
@@ -114,6 +116,21 @@ class LatinFormFinder(FormFinder):
 		return False
 
 	def getForms(self, Lemma):
+		lemma_form = self.table.select(
+						[ Models.storage.Condition("form_morph", Lemma.text, "=") ], 
+						select = ["lemma_morph"], 
+						limit = None
+					)
+
+		conditions = [Models.storage.Condition("lemma_morph", morph["lemma_morph"], "=", "OR") for morph in lemma_form]
+		if len(conditions) > 0:
+			conditions[len(conditions) - 1 ].next = ""
+
+		data = self.table.select(conditions, limit = None)
+		
+		return [Models.lang.Form(uid = f["id_morph"], text = f["form_morph"], lemma = Lemma, pos = f["pos"], number = f["number"], gender = f["gender"], case = f["case"]) for f in data]
+
+	def getLemmas(self, Occurence):
 		lemma_form = self.table.select(
 						[ Models.storage.Condition("form_morph", Lemma.text, "=") ], 
 						select = ["lemma_morph"], 

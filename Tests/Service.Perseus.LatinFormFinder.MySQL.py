@@ -12,7 +12,7 @@ import Linguistic
 
 from Services.Perseus import MySQL as Perseus
 from Services.Perseus.MySQL import Lemma
-from Services.Perseus.MySQL import LatinFormFinder as FormFinder
+from Services.Perseus.MySQL import LatinLemmatizer as FormFinder
 
 L = Lemma()
 r = L.search("actum", strict = True)

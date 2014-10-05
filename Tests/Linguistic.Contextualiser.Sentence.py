@@ -13,7 +13,7 @@ from Services.Perseus import MySQL as Perseus
 from Services.Perseus.MySQL import Lemma
 from Linguistic.Contextualiser.syntax import WordWindow as Contextualiser
 from Services.Perseus.MySQL import Occurence
-from Services.Perseus.MySQL import LatinFormFinder as FormFinder
+from Services.Perseus.MySQL import LatinLemmatizer as FormFinder
 
 #Set up with real data
 L = Lemma()
