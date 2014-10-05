@@ -4,10 +4,10 @@
 import sys 
 sys.path.append("../..")
 
-from common import Model
+import Linguistic.Contextualiser.common
 import Data.Models
 
-class WordWindow(Model):
+class WordWindow(Linguistic.Contextualiser.common.Model):
 
 	def __init__(self):
 		self.mode = "Sentence"

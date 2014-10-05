@@ -5,12 +5,12 @@ import sys
 import inspect
 sys.path.append("../..")
 
-from common import Model
+import Linguistic.Contextualiser.common
 import Linguistic.Lemma
 import Data.Models
 import nltk
 
-class Sentence(Model):
+class Sentence(Linguistic.Contextualiser.common.Model):
 
 	def __init__(self, n = None, FormFinderClass = None):
 		#Legacy, should be dropped
