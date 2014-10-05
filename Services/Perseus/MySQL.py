@@ -8,7 +8,7 @@ import xml
 sys.path.append("../..")
 
 from Data import Models
-import Linguistic.Lemma
+from Linguistic.Lemma.form import Finder as FormFinder
 from Services.Perseus.Common import Chunk
 from Data import Tools
 
@@ -53,7 +53,7 @@ class Config(object):
 			if table.name in tables:
 				assert table.check(), "No table for {0}".format(table.name)
 
-class LatinFormFinder(Linguistic.Lemma.form.Finder):
+class LatinFormFinder(FormFinder):
 	def __init__(self):
 		self.file = Tools.download.File("https://github.com/jfinkels/hopper/raw/master/xml/data/latin.morph.xml", "/morph", "latin.morph.xml")
 		self.table = Table(

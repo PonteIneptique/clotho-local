@@ -5,20 +5,20 @@ import sys
 import inspect
 sys.path.append("../..")
 
-import Linguistic.Contextualiser.common
-import Linguistic.Lemma
+from Linguistic.Contextualiser.common import Model as Contextualiser
+from Linguistic.Lemma.form import Finder as FormFinder
 import Data.Models
 import nltk
 
-class Sentence(Linguistic.Contextualiser.common.Model):
+class Sentence(Contextualiser):
 
 	def __init__(self, n = None, FormFinderClass = None):
 		#Legacy, should be dropped
 		self.processed = None
 
-		if inspect.isclass(FormFinderClass) and issubclass(FormFinderClass, Linguistic.Lemma.form.Finder):
+		if inspect.isclass(FormFinderClass) and issubclass(FormFinderClass, FormFinder):
 			self.FormFinder = FormFinderClass()
-		elif isinstance(FormFinderClass, Linguistic.Lemma.form.Finder):
+		elif isinstance(FormFinderClass, FormFinder):
 			self.FormFinder = FormFinderClass
 		else:
 			raise TypeError("FormFinder is not a FormFinder object or subsclass")
