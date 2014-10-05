@@ -41,6 +41,7 @@ class Lemma(object):
 		self.text = None
 		self.definition = None
 		self.forms = None
+		self.formStringList = None
 		if isinstance(uid, basestring):
 			self.uid = uid
 		elif isinstance(uid, int):
@@ -54,4 +55,6 @@ class Lemma(object):
 		return self.text
 
 	def getFormStringList(self):
-		return [form.toString() for form in self.forms]
+		if not self.formStringList:
+			self.formStringList = [form.toString() for form in self.forms]
+		return self.formStringList
