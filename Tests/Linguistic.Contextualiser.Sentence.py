@@ -14,6 +14,7 @@ from Services.Perseus.MySQL import Lemma
 from Linguistic.Contextualiser.syntax import WordWindow as Contextualiser
 from Services.Perseus.MySQL import Occurence
 from Services.Perseus.MySQL import LatinLemmatizer as FormFinder
+from Services.Perseus.MySQL import LatinLemmatizer as Lemmatizer
 
 #Set up with real data
 L = Lemma()
@@ -27,3 +28,9 @@ C = Contextualiser(FormFinderClass = FormFinder)
 CCleaned = C.strip(R, habeo)
 
 #Lemmatized test
+LL = Lemmatizer()
+sentence = CCleaned[0]
+sentence = LL.getLemmas(sentence)
+
+print sentence 
+print sentence.lemmatizedToString()

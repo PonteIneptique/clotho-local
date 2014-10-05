@@ -103,7 +103,7 @@ class Occurence(object):
 		self.form = None
 		self.chunk = None
 		self.augmented = None #The text but in augmented form like XML or so
-		self.lemmatized = [] #A list of lemma
+		self.lemmatized = [] #A list of forms with Lemma in there
 
 		if isinstance(chunk, Chunk) and not isinstance(text, basestring):
 			self.text = chunk.getText()
@@ -128,3 +128,11 @@ class Occurence(object):
 
 	def toString(self):
 		return self.text
+
+	def lemmatizedToString(self):
+		forms = []
+		for word in self.lemmatized: #Getting a list of form for each word
+			for form in word:
+				for lemma in form.lemma:
+					forms.append(lemma.text)
+		return " ".join(forms)

@@ -10,6 +10,7 @@ sys.path.append("../..")
 from Data import Models
 from Linguistic.Lemma.form import Lemmatizer
 from Services.Perseus.Common import Chunk
+from Linguistic.Contextualiser.common import Dots as DotsList
 from Data import Tools
 
 import nltk
@@ -130,21 +131,18 @@ class LatinLemmatizer(Lemmatizer):
 		
 		return [Models.lang.Form(uid = f["id_morph"], text = f["form_morph"], lemma = Lemma, pos = f["pos"], number = f["number"], gender = f["gender"], case = f["case"]) for f in data]
 
-	def getLemmas(self, Occurence):
-		lemma_form = self.table.select(
-						[ Models.storage.Condition("form_morph", Lemma.text, "=") ], 
-						select = ["lemma_morph"], 
-						limit = None
-					)
-
-		conditions = [Models.storage.Condition("lemma_morph", morph["lemma_morph"], "=", "OR") for morph in lemma_form]
-		if len(conditions) > 0:
-			conditions[len(conditions) - 1 ].next = ""
+	def _getLemma(self, string):
+		conditions = [Models.storage.Condition("form_morph", string, "=")]
 
 		data = self.table.select(conditions, limit = None)
-		
-		return [Models.lang.Form(uid = f["id_morph"], text = f["form_morph"], lemma = Lemma, pos = f["pos"], number = f["number"], gender = f["gender"], case = f["case"]) for f in data]
 
+		return [Models.lang.Form(uid = f["id_morph"], text = f["form_morph"], lemma = [Models.lang.Lemma(uid = f["id_morph"], text = f["lemma_morph"])], pos = f["pos"], number = f["number"], gender = f["gender"], case = f["case"]) for f in data]
+
+	def getLemmas(self, Occurence):
+		tokens = [self._getLemma(w) for w in nltk.tokenize.word_tokenize(Occurence.text) if w not in DotsList]
+		Occurence.lemmatized = tokens
+		return Occurence
+		
 class Lemma(Models.lang.Lemma):
 	def __init__(self):
 		self.config = Config(tables = ["hib_lemmas", "morphs"])
