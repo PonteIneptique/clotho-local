@@ -14,3 +14,12 @@ class Finder(object):
 
 	def getForms(self, lemma):
 		raise NotImplementedError("getForms not implemented")
+
+class Lemmatizer(object):
+
+	def __init__(self):
+		pass
+
+	def getLemmatized(self):
+		#Should return an Occurence with a list of lemma in lemmas
+		raise NotImplementedError("getLemmatized is not implemented")

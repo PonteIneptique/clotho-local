@@ -97,11 +97,13 @@ class Chunk(object):
 
 
 class Occurence(object):
-	def __init__(self, text = None, lemma = None, form = None, chunk = None):
+	def __init__(self, text = None, lemma = None, form = None, chunk = None, augmented = None, lemmatized = []):
 		self.text = None
 		self.lemma = None
 		self.form = None
 		self.chunk = None
+		self.augmented = None #The text but in augmented form like XML or so
+		self.lemmatized = [] #A list of lemma
 
 		if isinstance(chunk, Chunk) and not isinstance(text, basestring):
 			self.text = chunk.getText()
