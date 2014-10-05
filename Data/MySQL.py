@@ -35,12 +35,12 @@ class Connection(object):
 				self.conf["MySQL"]["identifiers"]["user"], 
 				self.conf["MySQL"]["identifiers"]["password"], 
 				self.conf["MySQL"]['database'][alias], 
-				charset='utf8');
+				charset='utf8', use_unicode = False);
 		except:
 			self.con = False
 
 	def escape(self, string):
-		""" Return a mysql escaped string
+		""" Return a mysql es, caped string
 
 		keywords argument:
 		string -- String to be escaped
