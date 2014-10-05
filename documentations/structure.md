@@ -33,12 +33,14 @@ OccurenceSearchInstance.search(Data.Models.lang.Lemma(uid = None, "habeo", defin
 ```
 
 ##Contextualisation of occurences
-This **optionnal step** aims to provide services which will take an Occurence() object and strip it texts to what the user needs. For example, this could reduce the occurence to a grammatical Sentence or to a n-word window. This class should have a strip() function which takes a Lemma() and an Cccurence as parameter and returns an Occurence
+This **optionnal step** aims to provide services which will take an Occurence() object and strip it texts to what the user needs. For example, this could reduce the occurence to a grammatical Sentence or to a n-word window. This class should have a strip() function which takes a Lemma() and an Occurence instance as parameter and returns an Occurence
+
+The Contextualiser itself can take a n parameters in some case as well as a FormFinder class or Object (Linguistic.Lemma.form.Finder)
 
 ```python
 #2-Word window example
-Contextualiser = Linguistic.Contextualiser.WordsWindow(n = 2)
-Contextualiser.strip(Data.Models.documents.Occurence(), Data.Models.lang.Lemma())
+Contextualiser = Linguistic.Contextualiser.WordsWindow(n = 2, FormFinderClass = Services.Perseus.MySQL.LatinFormFinder)
+Contextualiser.strip(Data.Models.documents.Occurence(), Data.Models.lang.Lemma(), Linguistic.Lemma.form.Finder)
 # -> Data.Models.documents.Occurence()
 ```
 
