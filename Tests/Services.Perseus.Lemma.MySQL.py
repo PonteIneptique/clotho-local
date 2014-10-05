@@ -6,10 +6,9 @@ import sys, os
 sys.path.append("../")
 
 from Data import Models
-import Services.Perseus
 
-Perseus = Services.Perseus.MySQL
-Lemma = Services.Perseus.MySQL.Lemma
+from Services.Perseus import MySQL as Perseus
+from Services.Perseus.MySQL import Lemma
 
 l = Lemma()
 search = l.search("azerty")

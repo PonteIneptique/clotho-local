@@ -10,10 +10,9 @@ import Services.Perseus
 import Linguistic
 
 
-Perseus = Services.Perseus.MySQL
-Lemma = Services.Perseus.MySQL.Lemma
-Contextualiser = Linguistic.Contextualiser.WordWindow
-FormFinder = Services.Perseus.MySQL.LatinFormFinder
+from Services.Perseus import MySQL as Perseus
+from Services.Perseus.MySQL import Lemma
+from Services.Perseus.MySQL import LatinFormFinder as FormFinder
 
 L = Lemma()
 r = L.search("actum", strict = True)
