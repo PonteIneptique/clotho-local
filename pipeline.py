@@ -13,6 +13,7 @@ from Linguistic.Contextualiser.syntax import WordWindow as Contextualiser
 from Services.Perseus.MySQL import Occurence
 from Services.Perseus.MySQL import LatinLemmatizer as FormFinder
 from Services.Perseus.MySQL import LatinLemmatizer as Lemmatizer
+from Exporter.Raws import RCorpus as Exporter
 
 #Set up with real data
 LemmaSearchEngine = Lemma()
@@ -34,3 +35,10 @@ for occurence in occurences_raw:
 #But we need fo get a lemmatized version of it 
 
 occurences = [LemmatizerEngine.getLemmas(occurence) for occurence in occurences]
+
+#Then for the export we need OccurenceSetList
+
+OccurenceSetList = [Models.documents.OccurenceSet(LemmaEntity, occurences)]
+
+ExporterInstance = Exporter(OccurenceSetList)
+ExporterInstance.write()

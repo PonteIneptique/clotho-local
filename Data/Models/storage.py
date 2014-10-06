@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-
 class Field(object):
 	def __init__(self, name, parameters = None, options = None):
 		if isinstance(name, basestring) and not isinstance(name, unicode):

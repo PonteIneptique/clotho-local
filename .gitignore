@@ -12,3 +12,4 @@ progressbar/*
 *.json
 *.zip
 exports/*
+data/*

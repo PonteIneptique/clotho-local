@@ -6,6 +6,23 @@ sys.path.append("../..")
 
 from Data.Models import lang
 
+class OccurenceSet(object):
+	def __init__(self, lemma, occurences):
+		"""
+
+		@type lemma: Data.Models.lang.lemma
+		@param lemma: A lemma object
+
+		@type occurences: list
+		@param occurences: A list of Data.Models.documents.Occurence
+		"""
+		if not isinstance(lemma, lang.Lemma):
+			raise TypeError("Lemma is not a Models.lang.Lemma")
+		else:
+			self.lemma = lemma
+			
+		self.occurences = occurences
+
 class Text(object):
 	def __init__(self, uid = None, metadata = None):
 		if isinstance(uid, basestring):
