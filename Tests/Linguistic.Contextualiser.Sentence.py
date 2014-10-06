@@ -32,5 +32,5 @@ LL = Lemmatizer()
 sentence = CCleaned[0]
 sentence = LL.getLemmas(sentence)
 
-print sentence 
+print sentence.text
 print sentence.lemmatizedToString()

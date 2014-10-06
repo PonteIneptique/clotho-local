@@ -132,7 +132,8 @@ class Occurence(object):
 	def lemmatizedToString(self):
 		forms = []
 		for word in self.lemmatized: #Getting a list of form for each word
+			f = []
 			for form in word:
-				for lemma in form.lemma:
-					forms.append(lemma.text)
+				f += [lemma.text for lemma in form.lemma]
+			forms += list(set([lemma for lemma in f]))
 		return " ".join(forms)
