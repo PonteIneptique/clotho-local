@@ -53,3 +53,23 @@ Lemmatizer = Linguistic.Perseus.MySQL.Lemmatizer()
 Lemmatizer.parse(Data.Models.documents.Occurence())
 # -> List(Data.Models.lang.Form())
 ```
+
+##Grouping Occurence
+An `OccurenceSet` instance is an object which takes two parameters : a Lemma and a list of Occurences. This means to regroup data together so it's treated as a group. 
+
+```python
+#Example
+OccurenceSet = Data.Models.documents.OccurenceSet(lemma = Data.Models.lang.Lemma(...), occurences = [Data.Models.documents.Occurence(), Data.Models.documents.Occurence(), ...])
+```
+
+##Exporter
+The exporter is the real aim of the whole pipeline. It offers to the user a way to treat collected data. For example, exporting data to json, plain text, or create graph about those data. They are based on `Exporter.common.Model` and takes at least two parameters : Exporter.common.Model(List(OccurenceSet)). `self.write()` is the function to export / write.
+
+```python
+#Example
+OccurenceSet1 = Data.Models.documents.OccurenceSet(lemma = Data.Models.lang.Lemma(...), occurences = [Data.Models.documents.Occurence(), Data.Models.documents.Occurence(), ...])
+OccurenceSet2 = Data.Models.documents.OccurenceSet(lemma = Data.Models.lang.Lemma(...), occurences = [Data.Models.documents.Occurence(), Data.Models.documents.Occurence(), ...])
+
+ExporterInstance = Exporter.Raws.RCorpus([OccurenceSet1, OccurenceSet2])
+ExporterInstance.write()
+```
