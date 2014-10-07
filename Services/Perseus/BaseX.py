@@ -49,7 +49,8 @@ class Config(object):
 			self.Session.execute("DROP DB {0}".format(self.DBName))
 
 		try:
-			self.Session.execute("SET INTPARSE false")
+			#Next line is commented. It was a workaround for BaseX 7.7. Fixed in 7.9
+			#self.Session.execute("SET INTPARSE false")
 			self.Session.execute("CREATE DB {0} {1}".format(self.DBName, self.folder(self.path + self.tei)))
 			return True
 		except Exception as E:
