@@ -54,7 +54,7 @@ class Chunk(Data.Models.documents.Chunk):
 		"""
 		__dir__ = os.path.dirname(os.path.abspath(__file__))
 		_regexp = re.compile("Perseus:text:([0-9]{4}\.[0-9]{2}\.[0-9]{4})")
-		p = "../../texts/"
+		p = "../../texts/perseus-old"
 		identifier = _regexp.search(self.document.uid).group(1)
 		identifier = identifier.split(".")
 		p += ".".join(identifier[:2]) + "/" + ".".join(identifier) + ".xml"
