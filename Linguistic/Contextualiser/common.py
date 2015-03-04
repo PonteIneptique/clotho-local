@@ -12,10 +12,13 @@ class Model(object):
 		pass
 
 	def strip(self, occurence, lemma):
+
 		if not isinstance(occurence, Occurence):
 			raise TypeError("Occurence is not a Data.Models.documents.Occurence")
+			
 		if not isinstance(lemma, Lemma):
 			raise TypeError("Lemma is not a Data.Models.lang.Lemma")
+
 		raise NotImplementedError("Strip is not part of the class")
 
 Dots = [',', '.', '...', '"', "'", ':', ';', '!', '?','-', "(", ")", "[", "]"]

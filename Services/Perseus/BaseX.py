@@ -16,14 +16,52 @@ import External.BaseXClient as BaseXClient
 class Config(object):
 	def __init__(self):
 		self.Session = BaseXClient.Session('localhost', 1984, 'admin', 'admin')
-		self.DBName = "perseus-canonical-TEI"
+		self.DBName = "perseus-canonical-TEI-latin"
 		self.path = "/texts/perseus-canonical"
-		self.tei = "/CTS_XML_TEI"
+		self.tei = "/CTS_XML_TEI/perseus/latinLit"
 		self.perseids = "/CTS_XML_EpiDoc"
 		self.metadata = "/CTS_XML_TextInventory"
 
 		self.github = Github("PerseusDL", "canonical", "/texts/perseus-canonical")
 
+
+	def search(self):
+
+		try:
+			# create query instance
+			input = """
+					let $words := ("lascivus" ,"lascivi")
+					for $text in db:open("perseus-canonical-TEI-latin")
+
+					  where  ft:contains($text, $words) 
+					    and $text//langUsage/language[@id="la"]
+					    and not($text//text[@lang="en"])
+					    
+					  let $textname := document-uri($text)
+					  let $supernode := $text//body/descendant::*[@n and @type and ft:contains(., $words) and not(./descendant::*[@n and @type])]
+					  let $node := $supernode/descendant-or-self::node()/*[ft:contains(., $words) and not(./descendant::*[ft:contains(., $words)])]
+					  let $map := map { 
+					    'textname' : $textname
+					  }
+					return 
+					  <result>
+					    <filename>{$textname}</filename>
+					    <supernode type="{$supernode/@type}" n="{$supernode/@n}"></supernode>
+					    <sentence>{$supernode/descendant-or-self::node()/text()}</sentence>
+					  </result>
+					"""
+			query = self.Session.query(input)
+			
+			# bind variable
+			#query.bind("$name", "number")
+			# print result
+			return query.execute()
+			# close query object
+			query.close()
+
+		except Exception as E:
+			print E
+			return False
 
 	def _checkDB(self):
 		try:
@@ -52,6 +90,7 @@ class Config(object):
 			#Next line is commented. It was a workaround for BaseX 7.7. Fixed in 7.9
 			#self.Session.execute("SET INTPARSE false")
 			self.Session.execute("CREATE DB {0} {1}".format(self.DBName, self.folder(self.path + self.tei)))
+			self.Session.execute("CREATE INDEX fulltext")
 			return True
 		except Exception as E:
 			print E
@@ -86,7 +125,8 @@ class Occurence(object):
 			raise TypeError("Lemma is not an instance of Models.lang.Lemma")
 
 		#Results array to get
-
+		#//body/descendant-or-self::*[text() contains text {"lascivus", "lascivi", "lasciva"}
+		#ft:search("perseus-canonical-TEI-latin", ("lascivus", "lascivi", "lasciva"))
 		chunks = []
 		for result in results:
 			chunks.append(

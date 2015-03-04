@@ -37,6 +37,7 @@ class Chunk(Data.Models.documents.Chunk):
 			doc = libxml2.parseDoc(self.text.encode("utf-8"))
 			ctxt = doc.xpathNewContext()
 			div1 = ctxt.xpathEval(xpath)
+			
 
 			results = []
 			for e in div1:
